@@ -3,60 +3,65 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-  <title>BusFlux</title>
-
+  <title>BusFlux - Book Bus Tickets Instantly</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="style.css">
 </head>
+<body class="fade-in">
 
-<body>
+  <header class="main-header">
+    <div class="nav-container">
+      <a href="index.html" class="logo">
+        <i class="fas fa-bus-alt"></i> BusFlux
+      </a>
+      <ul class="nav-links" id="navLinks">
+        <li><a href="index.html" class="active">Home</a></li>
+        <li><a href="buses.html">Buses</a></li>
+        <li><a href="login.html" class="nav-btn">Login</a></li>
+      </ul>
+    </div>
+  </header>
 
   <div class="container">
+    <h1>Welcome to <span>BusFlux</span> 🚍</h1>
+    <p class="subtitle">Book your bus tickets easily and quickly with our modern routing system.</p>
 
-    <h1>Welcome to BusFlux 🚍</h1>
+    <div class="feature-grid">
+      <div class="feature-card">
+        <i class="fas fa-bolt"></i>
+        <h3>Instant Booking</h3>
+        <p>Confirm seat reservations in a single click.</p>
+      </div>
+      <div class="feature-card">
+        <i class="fas fa-route"></i>
+        <h3>Express Routes</h3>
+        <p>Multiple direct routes connecting key hubs.</p>
+      </div>
+      <div class="feature-card">
+        <i class="fas fa-shield-halved"></i>
+        <h3>Secure Pass</h3>
+        <p>Keep tickets stored safely on your account.</p>
+      </div>
+      <div class="feature-card">
+        <i class="fas fa-headset"></i>
+        <h3>24/7 Support</h3>
+        <p>Always active helpline for passengers.</p>
+      </div>
+    </div>
 
-    <p>Book your bus tickets easily and quickly.</p>
-
-    <a href="login.html">
-      <button>Login</button>
+    <!-- Quick Navigation Links -->
+    <a href="buses.html" style="text-decoration: none;">
+      <button><i class="fas fa-search"></i> Search Available Buses</button>
     </a>
 
-    <a href="register.html">
-      <button>Register</button>
-    </a>
-
-    <a href="buses.html">
-      <button>View Buses</button>
-    </a>
-
-    <button onclick="checkBookingAccess()">
-      My Bookings
+    <button class="btn-secondary" onclick="checkBookingAccess()">
+      <i class="fas fa-ticket"></i> View My Bookings
     </button>
-
   </div>
 
+  <!-- Toast notifications target -->
+  <div id="toastContainer"></div>
 
-  <script>
-
-    function checkBookingAccess(){
-
-      const token = localStorage.getItem("token");
-
-      if(!token){
-
-        alert("Before booking you should register/login");
-
-        window.location.href = "register.html";
-
-      } else {
-
-        window.location.href = "bookings.html";
-
-      }
-
-    }
-
-  </script>
-
+  <script src="script.js"></script>
 </body>
 </html>

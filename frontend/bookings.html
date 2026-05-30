@@ -3,22 +3,39 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-  <title>My Bookings</title>
-
+  <title>My Bookings - BusFlux</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="style.css">
 </head>
-<body>
+<body class="fade-in">
 
-  <div class="container">
+  <header class="main-header">
+    <div class="nav-container">
+      <a href="index.html" class="logo">
+        <i class="fas fa-bus-alt"></i> BusFlux
+      </a>
+      <ul class="nav-links" id="navLinks">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="buses.html">Buses</a></li>
+        <li><a href="bookings.html" class="active">My Bookings</a></li>
+      </ul>
+    </div>
+  </header>
 
-    <h1>My Bookings</h1>
+  <div class="container container-wide">
+    <h1>My <span>Bookings</span></h1>
+    <p class="subtitle">Your boarding passes and travel history</p>
 
-    <div id="bookingList"></div>
-
+    <div id="bookingList">
+      <div style="text-align: center; padding: 40px; color: var(--text-muted);">
+        <i class="fas fa-spinner fa-spin" style="font-size: 2.5rem; margin-bottom: 15px; color: #a855f7;"></i>
+        <p>Loading your travel passes...</p>
+      </div>
+    </div>
   </div>
 
-  <script src="script.js"></script>
+  <div id="toastContainer"></div>
 
+  <script src="script.js"></script>
 </body>
 </html>

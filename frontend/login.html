@@ -3,37 +3,58 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
   <title>Login - BusFlux</title>
-
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="style.css">
 </head>
-<body>
+<body class="fade-in">
+
+  <header class="main-header">
+    <div class="nav-container">
+      <a href="index.html" class="logo">
+        <i class="fas fa-bus-alt"></i> BusFlux
+      </a>
+      <ul class="nav-links" id="navLinks">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="buses.html">Buses</a></li>
+        <li><a href="login.html" class="active">Login</a></li>
+      </ul>
+    </div>
+  </header>
 
   <div class="container">
-
-    <h1>BusFlux Login</h1>
+    <h1><span>BusFlux</span> Login</h1>
+    <p class="subtitle">Access your digital ticket portal</p>
 
     <form id="loginForm">
+      <div class="form-group">
+        <label class="form-label" for="loginEmail">Email Address</label>
+        <div class="input-wrapper">
+          <input type="email" id="loginEmail" placeholder="Enter your email" required>
+          <i class="fas fa-envelope"></i>
+        </div>
+      </div>
 
-      <input type="email" id="loginEmail" placeholder="Enter Email" required>
+      <div class="form-group">
+        <label class="form-label" for="loginPassword">Password</label>
+        <div class="input-wrapper">
+          <input type="password" id="loginPassword" placeholder="Enter your password" required>
+          <i class="fas fa-lock"></i>
+        </div>
+      </div>
 
-      <input type="password" id="loginPassword" placeholder="Enter Password" required>
-
-      <button type="submit">Login</button>
-
+      <button type="submit"><i class="fas fa-right-to-bracket"></i> Login</button>
     </form>
 
-    <p id="loginMessage"></p>
+    <p id="loginMessage" style="text-align: center; margin-top: 15px; color: var(--text-muted); font-size: 0.95rem;"></p>
 
+    <div class="form-footer-link">
+      Don't have an account? <a href="register.html">Register here</a>
+    </div>
   </div>
 
+  <div id="toastContainer"></div>
+
   <script src="script.js"></script>
-
-  <p style="text-align:center; margin-top:15px;">
-  Don't have an account?
-  <a href="register.html">Register</a>
-</p>
-
 </body>
 </html>
