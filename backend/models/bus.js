@@ -2,46 +2,48 @@ const mongoose = require("mongoose");
 
 const busSchema = new mongoose.Schema({
 
-  busName: {
-    type: String,
-    required: true
-  },
+  // ── Basic Info ──
+  busName: { type: String, required: true },
+  busNumber: { type: String, required: true, unique: true },
+  busPhoto: { type: String, default: "" },
 
-  from: {
-    type: String,
-    required: true
-  },
+  // ── Route ──
+  from: { type: String, required: true },
+  to: { type: String, required: true },
+  departureTime: { type: String, required: true },
+  arrivalTime: { type: String, required: true },
+  stops: [{ type: String }],          // intermediate stops
 
-  to: {
-    type: String,
-    required: true
-  },
+  // ── Pricing ──
+  price: { type: Number, required: true },
+  childPrice:      { type: Number, default: 0 },
+  youthPrice:      { type: Number, default: 0 },
+  youngAdultPrice: { type: Number, default: 0 },
+  middleAgePrice:  { type: Number, default: 0 },
+  elderlyPrice:    { type: Number, default: 0 },
+  seniorPrice:     { type: Number, default: 0 },
 
-  departureTime: {
-    type: String,
-    required: true
-  },
+  // ── Seats ──
+  totalSeats:     { type: Number, default: 40 },
+  availableSeats: { type: Number, default: 40 },
 
-  arrivalTime: {
-    type: String,
-    required: true
-  },
+  // ── Driver ──
+  driverName:       { type: String, default: "" },
+  driverPhone:      { type: String, default: "" },
+  driverPhoto:      { type: String, default: "" },
+  driverAddress:    { type: String, default: "" },
+  driverExperience: { type: String, default: "" },
 
-  price: {
-    type: Number,
-    required: true
-  },
+  // ── Conductor ──
+  conductorName:       { type: String, default: "" },
+  conductorPhone:      { type: String, default: "" },
+  conductorPhoto:      { type: String, default: "" },
+  conductorAddress:    { type: String, default: "" },
+  conductorExperience: { type: String, default: "" },
 
-  totalSeats: {
-    type: Number,
-    default: 40
-  },
-
-  availableSeats: {
-    type: Number,
-    default: 40
-  }
+  // ── Status ──
+  isActive: { type: Boolean, default: true }
 
 }, { timestamps: true });
 
-module.exports = mongoose.model("Bus", busSchema);
+module.exports = mongoose.models.Bus || mongoose.model("Bus", busSchema);

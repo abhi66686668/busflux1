@@ -1,442 +1,627 @@
-
 <!DOCTYPE html>
 <html lang="en">
 
 <head>
-
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Create your BusFlux account — seamless bus ticket booking for students and commuters.">
+  <title>Register - BusFlux</title>
 
-  <meta name="viewport"
-        content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
 
-  <title>
-    Register - BusFlux
-  </title>
+  <style>
+    /* ── Register-page extras ── */
+    :root {
+      --step-size: 36px;
+    }
 
-  <link rel="stylesheet"
-        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    .register-wrapper {
+      width: 92%;
+      max-width: 620px;
+      margin: 30px auto 60px;
+      animation: fadeIn 0.6s cubic-bezier(0.16,1,0.3,1) forwards;
+    }
 
-  <link rel="stylesheet"
-        href="style.css">
+    /* Hero heading */
+    .reg-hero {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+    .reg-hero h1 {
+      font-size: 2.1rem;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+    }
+    .reg-hero h1 span {
+      background: var(--primary-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .reg-hero p {
+      color: var(--text-muted);
+      margin-top: 6px;
+      font-size: 1rem;
+    }
 
+    /* Progress Steps */
+    .steps-bar {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0;
+      margin-bottom: 30px;
+    }
+    .step-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      position: relative;
+      z-index: 1;
+    }
+    .step-circle {
+      width: var(--step-size);
+      height: var(--step-size);
+      border-radius: 50%;
+      border: 2px solid rgba(255,255,255,0.12);
+      background: rgba(15,23,42,0.6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      transition: all 0.4s ease;
+    }
+    .step-label {
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      white-space: nowrap;
+      transition: color 0.4s;
+    }
+    .step-connector {
+      width: 60px;
+      height: 2px;
+      background: rgba(255,255,255,0.08);
+      margin-bottom: 22px;
+      transition: background 0.4s;
+    }
+    /* Active step */
+    .step-item.active .step-circle {
+      background: var(--primary-gradient);
+      border-color: transparent;
+      color: #fff;
+      box-shadow: 0 0 18px rgba(99,102,241,0.5);
+    }
+    .step-item.active .step-label { color: #a5b4fc; }
+    /* Done step */
+    .step-item.done .step-circle {
+      background: rgba(16,185,129,0.15);
+      border-color: var(--success);
+      color: var(--success);
+    }
+    .step-item.done .step-label { color: var(--success); }
+    .step-connector.done { background: var(--success); }
+
+    /* Card */
+    .reg-card {
+      background: rgba(30,41,59,0.65);
+      border: 1px solid rgba(255,255,255,0.08);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      border-radius: 20px;
+      padding: 36px 32px;
+      box-shadow: 0 24px 50px rgba(0,0,0,0.35);
+    }
+
+    /* Section header */
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 24px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    .section-icon {
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      background: rgba(99,102,241,0.15);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #818cf8;
+      font-size: 1rem;
+      flex-shrink: 0;
+    }
+    .section-header h2 {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--text-main);
+      margin: 0;
+    }
+    .section-header p {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      margin: 2px 0 0;
+    }
+
+    /* Two-column grid */
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0 18px;
+    }
+    .form-grid .full { grid-column: 1 / -1; }
+
+    @media(max-width: 520px) {
+      .form-grid { grid-template-columns: 1fr; }
+      .form-grid .full { grid-column: 1; }
+      .reg-card { padding: 24px 18px; }
+      .step-connector { width: 36px; }
+    }
+
+    /* Email row with inline button */
+    .email-row {
+      display: flex;
+      gap: 10px;
+      align-items: flex-end;
+    }
+    .email-row .form-group { flex: 1; margin-bottom: 0; }
+    .otp-send-btn {
+      flex-shrink: 0;
+      width: auto;
+      padding: 13px 16px;
+      font-size: 0.85rem;
+      margin-top: 0;
+      white-space: nowrap;
+      border-radius: var(--radius-md);
+    }
+
+    /* OTP section */
+    .otp-box {
+      background: rgba(99,102,241,0.06);
+      border: 1px solid rgba(99,102,241,0.2);
+      border-radius: 14px;
+      padding: 18px 20px;
+      margin-top: 16px;
+      display: none;
+      animation: fadeIn 0.4s ease forwards;
+    }
+    .otp-box.visible { display: block; }
+    .otp-row {
+      display: flex;
+      gap: 10px;
+      align-items: flex-end;
+    }
+    .otp-row .form-group { flex: 1; margin-bottom: 0; }
+    .otp-verify-btn {
+      flex-shrink: 0;
+      width: auto;
+      padding: 13px 16px;
+      font-size: 0.85rem;
+      margin-top: 0;
+      background: rgba(16,185,129,0.15);
+      border: 1px solid rgba(16,185,129,0.3);
+      color: var(--success);
+      box-shadow: none;
+    }
+    .otp-verify-btn:hover {
+      background: rgba(16,185,129,0.25);
+      box-shadow: 0 4px 14px rgba(16,185,129,0.2);
+    }
+    .otp-verified-badge {
+      display: none;
+      align-items: center;
+      gap: 6px;
+      color: var(--success);
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-top: 10px;
+    }
+    .otp-verified-badge.visible { display: flex; }
+
+    /* File upload area */
+    .upload-area {
+      border: 2px dashed rgba(255,255,255,0.1);
+      border-radius: 12px;
+      padding: 18px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+    .upload-area:hover {
+      border-color: rgba(99,102,241,0.4);
+      background: rgba(99,102,241,0.05);
+    }
+    .upload-area input[type="file"] {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+    }
+    .upload-area i { font-size: 1.6rem; color: var(--text-muted); margin-bottom: 6px; }
+    .upload-area p { font-size: 0.82rem; color: var(--text-muted); margin: 0; }
+    .upload-area .upload-name {
+      font-size: 0.8rem;
+      color: #818cf8;
+      font-weight: 600;
+      margin-top: 6px;
+      word-break: break-all;
+    }
+    .upload-preview {
+      width: 70px;
+      height: 70px;
+      border-radius: 10px;
+      object-fit: cover;
+      margin: 8px auto 0;
+      display: none;
+      border: 2px solid rgba(99,102,241,0.4);
+    }
+
+    /* Submit btn */
+    .submit-btn {
+      margin-top: 28px;
+      padding: 16px;
+      font-size: 1.05rem;
+      letter-spacing: 0.3px;
+      position: relative;
+      overflow: hidden;
+    }
+    .submit-btn::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,0.08) 0%, transparent 60%);
+      pointer-events: none;
+    }
+
+    /* Divider */
+    .section-divider {
+      height: 1px;
+      background: rgba(255,255,255,0.06);
+      margin: 24px 0;
+    }
+
+    /* Footer link */
+    .reg-footer {
+      text-align: center;
+      margin-top: 22px;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+    }
+    .reg-footer a {
+      color: #818cf8;
+      font-weight: 600;
+      text-decoration: none;
+      transition: color 0.3s;
+    }
+    .reg-footer a:hover { color: #a855f7; }
+
+    /* Verified state on email input */
+    input.verified {
+      border-color: rgba(16,185,129,0.5) !important;
+      background: rgba(16,185,129,0.04) !important;
+    }
+  </style>
 </head>
 
 <body class="fade-in">
 
   <!-- HEADER -->
-
   <header class="main-header">
-
     <div class="nav-container">
-
-      <a href="index.html"
-         class="logo">
-
-        <i class="fas fa-bus-alt"></i>
-
-        BusFlux
-
+      <a href="index.html" class="logo">
+        <i class="fas fa-bus-alt"></i> BusFlux
       </a>
-
-      <ul class="nav-links">
-
-        <li>
-          <a href="index.html">
-            Home
-          </a>
-        </li>
-
-        <li>
-          <a href="buses.html">
-            Buses
-          </a>
-        </li>
-
-        <li>
-          <a href="register.html"
-             class="active">
-            Register
-          </a>
-        </li>
-
-      </ul>
-
+      <ul id="navLinks" class="nav-links"></ul>
     </div>
-
   </header>
 
+  <div class="register-wrapper">
 
+    <!-- Hero -->
+    <div class="reg-hero">
+      <h1><span>BusFlux</span> Registration</h1>
+      <p>Create your account for seamless ticket booking</p>
+    </div>
 
-  <!-- REGISTER CONTAINER -->
+    <!-- Progress Steps -->
+    <div class="steps-bar">
+      <div class="step-item active" id="step1Indicator">
+        <div class="step-circle"><i class="fas fa-user"></i></div>
+        <span class="step-label">Details</span>
+      </div>
+      <div class="step-connector" id="conn1"></div>
+      <div class="step-item" id="step2Indicator">
+        <div class="step-circle"><i class="fas fa-envelope"></i></div>
+        <span class="step-label">Verify</span>
+      </div>
+      <div class="step-connector" id="conn2"></div>
+      <div class="step-item" id="step3Indicator">
+        <div class="step-circle"><i class="fas fa-image"></i></div>
+        <span class="step-label">Uploads</span>
+      </div>
+      <div class="step-connector" id="conn3"></div>
+      <div class="step-item" id="step4Indicator">
+        <div class="step-circle"><i class="fas fa-lock"></i></div>
+        <span class="step-label">Password</span>
+      </div>
+    </div>
 
-  <div class="container">
+    <!-- Main Card -->
+    <div class="reg-card">
+      <form id="registerForm" novalidate>
 
-    <h1>
-
-      <span>BusFlux</span>
-
-      Register
-
-    </h1>
-
-    <p class="subtitle">
-
-      Create an account for seamless ticket booking
-
-    </p>
-
-
-
-    <!-- FORM -->
-
-    <form id="registerForm">
-
-
-
-      <!-- NAME -->
-
-      <div class="form-group">
-
-        <label class="form-label">
-
-          Full Name
-
-        </label>
-
-        <div class="input-wrapper">
-
-          <input
-            type="text"
-            id="name"
-            placeholder="Enter your full name"
-            required
-          >
-
-          <i class="fas fa-user"></i>
-
+        <!-- ── SECTION 1: Personal Info ── -->
+        <div class="section-header">
+          <div class="section-icon"><i class="fas fa-user"></i></div>
+          <div>
+            <h2>Personal Information</h2>
+            <p>Your basic identity details</p>
+          </div>
         </div>
 
-      </div>
-
-
-
-      <!-- EMAIL -->
-
-      <div class="form-group">
-
-        <label class="form-label">
-
-          Email Address
-
-        </label>
-
-        <div class="input-wrapper">
-
-          <input
-            type="email"
-            id="email"
-            placeholder="Enter your email"
-            required
-          >
-
-          <i class="fas fa-envelope"></i>
-
-        </div>
-
-      </div>
-
-
-
-      <!-- PHONE -->
-
-      <div class="form-group">
-
-        <label class="form-label">
-
-          Phone Number
-
-        </label>
-
-        <div class="input-wrapper">
-
-          <input
-            type="text"
-            id="phone"
-            placeholder="Enter phone number"
-            required
-          >
-
-          <i class="fas fa-phone"></i>
-
-        </div>
-
-      </div>
-
-
-
-      <!-- AGE -->
-
-      <div class="form-group">
-
-        <label class="form-label">
-
-          Age
-
-        </label>
-
-        <div class="input-wrapper">
-
-          <input
-            type="number"
-            id="age"
-            placeholder="Enter age"
-            required
-          >
-
-          <i class="fas fa-calendar"></i>
-
-        </div>
-
-      </div>
-
-
-
-      <!-- AADHAAR -->
-
-      <div class="form-group">
-
-        <label class="form-label">
-
-          Aadhaar Number
-
-        </label>
-
-        <div class="input-wrapper">
-
-          <input
-            type="text"
-            id="aadhaarNumber"
-            placeholder="Enter Aadhaar number"
-            required
-          >
-
-          <i class="fas fa-id-card"></i>
-
-        </div>
-
-      </div>
-
-
-
-      <!-- COLLEGE ID -->
-
-      <div class="form-group">
-
-        <label class="form-label">
-
-          College ID
-
-        </label>
-
-        <div class="input-wrapper">
-
-          <input
-            type="text"
-            id="collegeId"
-            placeholder="Enter College ID"
-          >
-
-          <i class="fas fa-building"></i>
-
-        </div>
-
-      </div>
-
-
-
-      <!-- PROFILE PHOTO -->
-
-      <div class="form-group">
-
-        <label class="form-label">
-
-          Upload Profile Photo
-
-        </label>
-
-        <input
-          type="file"
-          id="userPhoto"
-          required
-        >
-
-      </div>
-
-
-
-      <!-- ID CARD -->
-
-      <div class="form-group">
-
-        <label class="form-label">
-
-          Upload ID Card
-
-        </label>
-
-        <input
-          type="file"
-          id="idCardPhoto"
-          required
-        >
-
-      </div>
-
-
-
-      <!-- SEND OTP -->
-
-      <button
-        type="button"
-        onclick="sendOtp()"
-      >
-
-        <i class="fas fa-paper-plane"></i>
-
-        Send OTP
-
-      </button>
-
-
-
-      <!-- TIMER -->
-
-      <p id="timerText"></p>
-
-
-
-      <!-- OTP SECTION -->
-
-      <div
-        id="otpSection"
-        style="display:none;"
-      >
-
-        <div class="form-group">
-
-          <label class="form-label">
-
-            Enter OTP
-
-          </label>
-
-          <div class="input-wrapper">
-
-            <input
-              type="text"
-              id="otp"
-              placeholder="Enter OTP"
-            >
-
-            <i class="fas fa-shield-alt"></i>
-
+        <div class="form-grid">
+
+          <!-- Name -->
+          <div class="form-group full">
+            <label class="form-label">Full Name</label>
+            <div class="input-wrapper">
+              <input type="text" id="name" placeholder="Enter your full name" required autocomplete="name">
+              <i class="fas fa-user"></i>
+            </div>
+          </div>
+
+          <!-- Phone -->
+          <div class="form-group">
+            <label class="form-label">Phone Number</label>
+            <div class="input-wrapper">
+              <input type="tel" id="phone" placeholder="+91 00000 00000" required>
+              <i class="fas fa-phone"></i>
+            </div>
+          </div>
+
+          <!-- Age -->
+          <div class="form-group">
+            <label class="form-label">Age</label>
+            <div class="input-wrapper">
+              <input type="number" id="age" placeholder="e.g. 21" min="5" max="99" required>
+              <i class="fas fa-calendar"></i>
+            </div>
+          </div>
+
+          <!-- Aadhaar -->
+          <div class="form-group">
+            <label class="form-label">Aadhaar Number</label>
+            <div class="input-wrapper">
+              <input type="text" id="aadhaarNumber" placeholder="XXXX XXXX XXXX" maxlength="14" required>
+              <i class="fas fa-id-card"></i>
+            </div>
+          </div>
+
+          <!-- College ID -->
+          <div class="form-group">
+            <label class="form-label">College ID <span style="color:var(--text-muted);font-weight:400">(optional)</span></label>
+            <div class="input-wrapper">
+              <input type="text" id="collegeId" placeholder="e.g. CSE2024001">
+              <i class="fas fa-building"></i>
+            </div>
           </div>
 
         </div>
 
+        <div class="section-divider"></div>
 
+        <!-- ── SECTION 2: Email & OTP ── -->
+        <div class="section-header">
+          <div class="section-icon"><i class="fas fa-envelope"></i></div>
+          <div>
+            <h2>Email Verification</h2>
+            <p>We'll send a one-time password to verify</p>
+          </div>
+        </div>
 
-        <button
-          type="button"
-          onclick="verifyOtp()"
-        >
+        <!-- Email + Send OTP inline -->
+        <div class="email-row">
+          <div class="form-group">
+            <label class="form-label">Email Address</label>
+            <div class="input-wrapper">
+              <input type="email" id="email" placeholder="you@example.com" required autocomplete="email">
+              <i class="fas fa-envelope"></i>
+            </div>
+          </div>
+          <button type="button" class="otp-send-btn" onclick="sendOtpUI()">
+            <i class="fas fa-paper-plane"></i> Send OTP
+          </button>
+        </div>
 
-          <i class="fas fa-check-circle"></i>
+        <!-- OTP input (hidden until email sent) -->
+        <div class="otp-box" id="otpSection">
+          <div class="otp-row">
+            <div class="form-group">
+              <label class="form-label">Enter OTP</label>
+              <div class="input-wrapper">
+                <input type="text" id="otp" placeholder="6-digit code" maxlength="6">
+                <i class="fas fa-shield-alt"></i>
+              </div>
+            </div>
+            <button type="button" class="otp-verify-btn" onclick="verifyOtpUI()">
+              <i class="fas fa-check-circle"></i> Verify
+            </button>
+          </div>
+          <div class="otp-verified-badge" id="otpVerifiedBadge">
+            <i class="fas fa-check-circle"></i> Email verified successfully!
+          </div>
+        </div>
 
-          Verify OTP
+        <div class="section-divider"></div>
 
-        </button>
+        <!-- ── SECTION 3: Photo Uploads ── -->
+        <div class="section-header">
+          <div class="section-icon"><i class="fas fa-camera"></i></div>
+          <div>
+            <h2>Photo Documents</h2>
+            <p>Upload your profile photo and college ID card</p>
+          </div>
+        </div>
 
-      </div>
+        <div class="form-grid">
 
+          <!-- Profile Photo -->
+          <div class="form-group">
+            <label class="form-label">Profile Photo</label>
+            <div class="upload-area" id="profileUploadArea">
+              <input type="file" id="userPhoto" accept="image/*" required onchange="previewFile(this,'profilePreview','profileUploadName')">
+              <i class="fas fa-user-circle"></i>
+              <p>Click to upload</p>
+              <p style="font-size:0.72rem;margin-top:4px;opacity:0.6">JPG, PNG, WEBP</p>
+              <div class="upload-name" id="profileUploadName"></div>
+              <img class="upload-preview" id="profilePreview" alt="Profile preview">
+            </div>
+          </div>
 
-
-      <!-- PASSWORD -->
-
-      <div class="form-group">
-
-        <label class="form-label">
-
-          Password
-
-        </label>
-
-        <div class="input-wrapper">
-
-          <input
-            type="password"
-            id="password"
-            placeholder="Create a password"
-            required
-          >
-
-          <i class="fas fa-lock"></i>
+          <!-- ID Card Photo -->
+          <div class="form-group">
+            <label class="form-label">College ID Card</label>
+            <div class="upload-area" id="idCardUploadArea">
+              <input type="file" id="idCardPhoto" accept="image/*" required onchange="previewFile(this,'idPreview','idUploadName')">
+              <i class="fas fa-id-badge"></i>
+              <p>Click to upload</p>
+              <p style="font-size:0.72rem;margin-top:4px;opacity:0.6">JPG, PNG, WEBP</p>
+              <div class="upload-name" id="idUploadName"></div>
+              <img class="upload-preview" id="idPreview" alt="ID preview">
+            </div>
+          </div>
 
         </div>
 
-      </div>
+        <div class="section-divider"></div>
 
+        <!-- ── SECTION 4: Password ── -->
+        <div class="section-header">
+          <div class="section-icon"><i class="fas fa-lock"></i></div>
+          <div>
+            <h2>Set Password</h2>
+            <p>Choose a strong password for your account</p>
+          </div>
+        </div>
 
+        <div class="form-grid">
+          <div class="form-group full">
+            <label class="form-label">Password</label>
+            <div class="input-wrapper">
+              <input type="password" id="password" placeholder="Minimum 8 characters" required minlength="8">
+              <i class="fas fa-lock" id="passwordIcon" style="cursor:pointer" onclick="togglePassword()"></i>
+            </div>
+          </div>
+        </div>
 
-      <!-- REGISTER -->
+        <!-- Submit -->
+        <button type="submit" class="submit-btn" id="registerSubmitBtn">
+          <i class="fas fa-user-plus"></i> Create My Account
+        </button>
 
-      <button type="submit">
+      </form>
+    </div>
 
-        <i class="fas fa-user-plus"></i>
-
-        Register
-
-      </button>
-
-    </form>
-
-
-
-    <!-- MESSAGE -->
-
-    <p id="message"
-       style="
-         text-align:center;
-         margin-top:15px;
-         color:var(--text-muted);
-       ">
-    </p>
-
-
-
-    <!-- LOGIN LINK -->
-
-    <div class="form-footer-link">
-
-      Already have an account?
-
-      <a href="login.html">
-
-        Login here
-
-      </a>
-
+    <!-- Footer link -->
+    <div class="reg-footer">
+      Already have an account? <a href="login.html">Login here</a>
     </div>
 
   </div>
 
-
-
   <div id="toastContainer"></div>
 
-  <script src="script.js"></script>
+  <script src="script.js?v=2"></script>
+  <script>
+    // ── Step indicator helpers ──
+    function setStepDone(n) {
+      const el = document.getElementById('step' + n + 'Indicator');
+      el.classList.remove('active');
+      el.classList.add('done');
+      const conn = document.getElementById('conn' + n);
+      if (conn) conn.classList.add('done');
+      const next = document.getElementById('step' + (n + 1) + 'Indicator');
+      if (next) next.classList.add('active');
+    }
+
+    // Mark step 1 done when name/phone/age/aadhaar are filled
+    document.querySelectorAll('#name,#phone,#age,#aadhaarNumber').forEach(inp => {
+      inp.addEventListener('blur', () => {
+        const allFilled = ['name','phone','age','aadhaarNumber'].every(id => document.getElementById(id).value.trim());
+        if (allFilled) setStepDone(1);
+      });
+    });
+
+    // ── OTP UI wrappers (call existing script.js functions + UI updates) ──
+    async function sendOtpUI() {
+      await sendOtp();
+      // Show OTP box as .visible class
+      const box = document.getElementById('otpSection');
+      if (box) box.classList.add('visible');
+    }
+
+    async function verifyOtpUI() {
+      await verifyOtp();
+      if (isOtpVerified) {
+        document.getElementById('email').classList.add('verified');
+        document.getElementById('otpVerifiedBadge').classList.add('visible');
+        setStepDone(2);
+      }
+    }
+
+    // ── File preview ──
+    function previewFile(input, previewId, nameId) {
+      const file = input.files[0];
+      if (!file) return;
+      document.getElementById(nameId).textContent = file.name;
+      const reader = new FileReader();
+      reader.onload = e => {
+        const img = document.getElementById(previewId);
+        img.src = e.target.result;
+        img.style.display = 'block';
+      };
+      reader.readAsDataURL(file);
+
+      // Mark step 3 done once both files selected
+      const p = document.getElementById('userPhoto').files[0];
+      const i = document.getElementById('idCardPhoto').files[0];
+      if (p && i) setStepDone(3);
+    }
+
+    // ── Toggle password visibility ──
+    function togglePassword() {
+      const inp = document.getElementById('password');
+      const ico = document.getElementById('passwordIcon');
+      if (inp.type === 'password') {
+        inp.type = 'text';
+        ico.classList.replace('fa-lock', 'fa-lock-open');
+      } else {
+        inp.type = 'password';
+        ico.classList.replace('fa-lock-open', 'fa-lock');
+      }
+    }
+
+    // ── Mark step 4 active when password is focused ──
+    document.getElementById('password').addEventListener('focus', () => {
+      const s4 = document.getElementById('step4Indicator');
+      if (!s4.classList.contains('done')) s4.classList.add('active');
+    });
+  </script>
 
 </body>
-
 </html>
-

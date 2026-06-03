@@ -22,7 +22,25 @@ const bookingSchema = new mongoose.Schema({
   totalPrice: {
     type: Number,
     required: true
-  }
+  },
+
+  boardingPoint: {
+    type: String,
+    default: ""
+  },
+
+  droppingPoint: {
+    type: String,
+    default: ""
+  },
+
+  paymentId: { type: String, default: "" },
+  orderId: { type: String, default: "" },
+  paymentMethod: { type: String, default: "wallet" },
+  paymentStatus: { type: String, default: "pending" },
+  status: { type: String, default: "booked" },
+  scannedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+  scannedAt: { type: Date }
 
 }, { timestamps: true });
 

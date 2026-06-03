@@ -34,6 +34,11 @@ const busRoutes =
 const bookingRoutes =
   require("./routes/bookingRoutes");
 
+const adminRoutes =
+  require("./routes/adminRoutes");
+
+const paymentRoutes = require("./routes/paymentRoutes");
+
 
 
 // ================= CONNECT DATABASE =================
@@ -99,6 +104,27 @@ app.use(
   bookingRoutes
 
 );
+
+
+
+// ADMIN
+app.use(
+
+  "/api/admin",
+
+  adminRoutes
+
+);
+
+
+// PAYMENT
+app.use(
+  "/api/payment",
+  paymentRoutes
+);
+
+// CONDUCTOR
+app.use("/api/conductor", require("./routes/conductorRoutes"));
 
 
 

@@ -169,13 +169,15 @@ const userSchema =
 
       // WALLET BALANCE
       balance: {
-
         type: Number,
+        default: 0
+      },
 
-        default: 3000
-
+      // LAST UPI ID USED
+      lastUpiIdUsed: {
+        type: String,
+        default: ""
       }
-
     },
 
     {

@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Conductor Dashboard - BusFlux</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+  <style>
+    :root {
+      --bg: #0d1326;
+      --card-bg: rgba(255,255,255,0.05);
+      --primary: #6366f1;
+      --success: #10b981;
+      --danger: #f43f5e;
+      --text: #f1f5f9;
+      --muted: #94a3b8;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; padding: 20px; padding-bottom: 80px; }
+
+    .header { text-align: center; margin-bottom: 20px; }
+    .header h1 { font-size: 1.5rem; font-weight: 800; background: linear-gradient(135deg, #6366f1, #a855f7); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .header p { color: var(--muted); font-size: 0.9rem; }
+
+    .scanner-box {
+      background: var(--card-bg); border-radius: 16px; padding: 15px; margin-bottom: 20px;
+      border: 1px solid rgba(255,255,255,0.1);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    }
+    #reader { width: 100%; border-radius: 8px; overflow: hidden; }
+
+    .manual-entry {
+      background: var(--card-bg); border-radius: 16px; padding: 15px; margin-bottom: 20px;
+      border: 1px solid rgba(255,255,255,0.1); display: flex; gap: 10px;
+    }
+    .manual-entry input {
+      flex: 1; padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1);
+      background: rgba(15,23,42,0.8); color: var(--text); font-size: 1rem;
+    }
+    .manual-entry button {
+      padding: 12px 20px; border-radius: 8px; border: none; background: var(--primary);
+      color: white; font-weight: 600; cursor: pointer;
+    }
+
+    .status-msg {
+      padding: 20px; border-radius: 12px; text-align: center; display: none; margin-bottom: 20px;
+      animation: popIn 0.3s ease;
+    }
+    @keyframes popIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    .status-msg.success { background: rgba(16,185,129,0.15); border: 2px solid var(--success); color: var(--success); }
+    .status-msg.error { background: rgba(244,63,94,0.15); border: 2px solid var(--danger); color: var(--danger); }
+    .status-msg h2 { font-size: 1.4rem; margin-bottom: 5px; }
+    .status-msg p { font-size: 0.95rem; color: var(--text); }
+
+    .history-card {
+      background: var(--card-bg); border-radius: 12px; padding: 15px; margin-bottom: 10px;
+      border: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center;
+    }
+    .history-info h4 { font-size: 1rem; margin-bottom: 2px; }
+    .history-info p { font-size: 0.8rem; color: var(--muted); }
+    .history-badge { background: rgba(16,185,129,0.2); color: var(--success); padding: 4px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 600; }
+
+    .bottom-nav {
+      position: fixed; bottom: 0; left: 0; right: 0; background: rgba(10,15,30,0.9);
+      backdrop-filter: blur(10px); display: flex; justify-content: space-around; padding: 15px;
+      border-top: 1px solid rgba(255,255,255,0.05); z-index: 100;
+    }
+    .nav-btn {
+      background: none; border: none; color: var(--muted); font-size: 1.2rem; cursor: pointer;
+      display: flex; flex-direction: column; align-items: center; gap: 4px;
+    }
+    .nav-btn.active { color: var(--primary); }
+    .nav-btn span { font-size: 0.7rem; font-weight: 600; }
+  </style>
+</head>
+<body>
+
+  <div class="header" style="position: relative;">
+    <h1><i class="fas fa-qrcode"></i> Scan Ticket</h1>
+    <p>Verify passenger tickets</p>
+    <button onclick="logout()" style="position: absolute; right: 0; top: 0; background: rgba(244,63,94,0.2); border: 1px solid var(--danger); color: var(--danger); padding: 5px 10px; border-radius: 6px; cursor: pointer;">
+      <i class="fas fa-sign-out-alt"></i> Logout
+    </button>
+  </div>
+
+  <div id="scanTab">
+    <div class="manual-entry" style="justify-content: center; margin-bottom: 15px;">
+      <input type="file" id="qrFileInput" accept="image/*" style="display:none;" onchange="handleFileUpload(event)">
+      <button onclick="document.getElementById('qrFileInput').click()" style="width: 100%; background: #a855f7;">
+        <i class="fas fa-upload"></i> Upload QR Image
+      </button>
+    </div>
+    <div id="hiddenReader" style="display:none;"></div>
+
+    <div class="manual-entry">
+      <input type="text" id="manualTicketId" placeholder="Or enter Ticket ID (e.g. A1B2C3D4)">
+      <button onclick="verifyTicket(document.getElementById('manualTicketId').value)">Verify</button>
+    </div>
+
+    <div id="statusMsg" class="status-msg">
+      <h2 id="statusTitle"></h2>
+      <p id="statusDesc"></p>
+    </div>
+  </div>
+
+  <div id="historyTab" style="display: none;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+      <h2 style="font-size: 1.2rem; margin: 0;">Today's Scans</h2>
+      <div style="background: rgba(16,185,129,0.15); border: 1px solid var(--success); padding: 6px 12px; border-radius: 8px; color: var(--success); font-weight: 800;">
+        Total: <span id="totalAmount">₹0</span>
+      </div>
+    </div>
+    <div id="historyList">
+      <!-- History items will appear here -->
+      <div style="text-align: center; color: var(--muted); padding: 20px;">Loading...</div>
+    </div>
+  </div>
+
+  <div class="bottom-nav">
+    <button class="nav-btn active" onclick="switchTab('scan')" id="btnScan">
+      <i class="fas fa-qrcode"></i>
+      <span>Scan</span>
+    </button>
+    <button class="nav-btn" onclick="switchTab('history')" id="btnHistory">
+      <i class="fas fa-clock-rotate-left"></i>
+      <span>History</span>
+    </button>
+  </div>
+
+  <script>
+    const API = "http://localhost:5000/api";
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      window.location.href = "login.html";
+    } else {
+      // Fast check role to prevent regular users from staying on the page
+      fetch(`${API}/auth/me`, { headers: { "Authorization": `Bearer ${token}` } })
+        .then(res => res.json())
+        .then(user => {
+          if (user.role !== 'conductor') {
+            window.location.href = "index.html";
+          }
+        })
+        .catch(err => {
+          localStorage.removeItem("token");
+          window.location.href = "login.html";
+        });
+    }
+
+    function logout() {
+      localStorage.removeItem("token");
+      window.location.href = "login.html";
+    }
+
+    function onScanSuccess(decodedText) {
+      console.log(`Scan result: ${decodedText}`);
+      verifyTicket(decodedText);
+    }
+
+    async function handleFileUpload(event) {
+      if (event.target.files.length === 0) return;
+      const file = event.target.files[0];
+      const html5QrCode = new Html5Qrcode("hiddenReader");
+      
+      const statusMsg = document.getElementById("statusMsg");
+      const statusTitle = document.getElementById("statusTitle");
+      const statusDesc = document.getElementById("statusDesc");
+      
+      statusMsg.style.display = "block";
+      statusMsg.className = "status-msg";
+      statusTitle.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Scanning Image...`;
+      statusDesc.textContent = "Please wait";
+
+      try {
+        const decodedText = await html5QrCode.scanFile(file, false);
+        onScanSuccess(decodedText);
+      } catch (err) {
+        console.error("File scan error:", err);
+        statusMsg.className = "status-msg error";
+        statusTitle.innerHTML = `<i class="fas fa-exclamation-triangle"></i> Scan Failed`;
+        statusDesc.textContent = "Could not find a valid QR code in the uploaded image.";
+      }
+      
+      event.target.value = ""; // clear input
+    }
+
+    function onScanFailure(error) {
+      // handle scan failure, usually better to ignore and keep scanning.
+    }
+
+    async function verifyTicket(ticketId) {
+      if (!ticketId) return;
+      
+      const statusMsg = document.getElementById("statusMsg");
+      const statusTitle = document.getElementById("statusTitle");
+      const statusDesc = document.getElementById("statusDesc");
+      
+      statusMsg.style.display = "block";
+      statusMsg.className = "status-msg";
+      statusTitle.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Verifying...`;
+      statusDesc.textContent = "Please wait";
+
+      try {
+        const res = await fetch(`${API}/conductor/scan`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+          },
+          body: JSON.stringify({ ticketId })
+        });
+        const data = await res.json();
+
+        if (res.ok) {
+          statusMsg.className = "status-msg success";
+          statusTitle.innerHTML = `<i class="fas fa-check-circle"></i> Verified!`;
+          
+          const photoUrl = data.passenger.userPhoto 
+            ? `${API.replace('/api', '')}${data.passenger.userPhoto}` 
+            : 'https://cdn-icons-png.flaticon.com/512/149/149071.png';
+
+          const amount = data.booking.totalPrice || 0;
+          const from = data.booking.busId?.from || data.booking.boardingPoint;
+          const to = data.booking.busId?.to || data.booking.droppingPoint;
+
+          statusDesc.innerHTML = `
+            <div style="display: flex; flex-direction: column; align-items: center; gap: 10px; margin-top: 15px;">
+              <img src="${photoUrl}" alt="Passenger Photo" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 2px solid var(--success);">
+              <div style="text-align: center;">
+                <strong style="font-size: 1.2rem;">${data.passenger.name}</strong>
+                <div style="color: var(--muted); font-size: 0.9rem; margin-top: 5px;">
+                  <i class="fas fa-route"></i> ${from} &rarr; ${to}
+                </div>
+                <div style="color: var(--muted); font-size: 0.9rem; margin-top: 5px;">
+                  <i class="fas fa-chair"></i> ${data.booking.seatsBooked} Seat(s)
+                </div>
+                <div style="font-weight: 800; color: #10b981; font-size: 1.1rem; margin-top: 8px;">
+                  Amount Paid: ₹${amount}
+                </div>
+              </div>
+            </div>
+          `;
+        } else {
+          statusMsg.className = "status-msg error";
+          statusTitle.innerHTML = `<i class="fas fa-times-circle"></i> Invalid!`;
+          statusDesc.textContent = data.message || "Invalid or already scanned ticket.";
+        }
+      } catch (e) {
+        statusMsg.className = "status-msg error";
+        statusTitle.innerHTML = `<i class="fas fa-exclamation-triangle"></i> Error`;
+        statusDesc.textContent = "Network error. Please try again.";
+      }
+
+      // Reset input after 3 seconds
+      setTimeout(() => {
+        document.getElementById("manualTicketId").value = "";
+      }, 3000);
+    }
+
+    async function loadHistory() {
+      const historyList = document.getElementById("historyList");
+      try {
+        const res = await fetch(`${API}/conductor/history`, {
+          headers: { "Authorization": `Bearer ${token}` }
+        });
+        const data = await res.json();
+
+        if (res.ok) {
+          if (data.length === 0) {
+            historyList.innerHTML = `<div style="text-align: center; color: var(--muted); padding: 20px;">No scans today</div>`;
+            document.getElementById('totalAmount').textContent = `₹0`;
+            return;
+          }
+
+          let totalSum = 0;
+
+          historyList.innerHTML = data.map(b => {
+            totalSum += (b.totalPrice || 0);
+            const date = new Date(b.scannedAt).toLocaleDateString();
+            const time = new Date(b.scannedAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            
+            const photoUrl = b.userId?.userPhoto 
+              ? `${API.replace('/api', '')}${b.userId.userPhoto}` 
+              : 'https://cdn-icons-png.flaticon.com/512/149/149071.png';
+
+            const amount = b.totalPrice || 0;
+            const from = b.busId?.from || b.boardingPoint || "Unknown";
+            const to = b.busId?.to || b.droppingPoint || "Unknown";
+
+            return `
+              <div class="history-card" style="align-items: flex-start; padding: 12px; gap: 12px;">
+                <img src="${photoUrl}" alt="Passenger" style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover; border: 1px solid rgba(255,255,255,0.2);">
+                <div class="history-info" style="flex: 1;">
+                  <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                    <h4 style="font-size: 1.1rem; margin-bottom: 4px;">${b.userId?.name || "Unknown"}</h4>
+                    <div class="history-badge" style="white-space: nowrap;"><i class="fas fa-check"></i> Scanned</div>
+                  </div>
+                  <div style="color: var(--muted); font-size: 0.85rem; margin-bottom: 4px;">
+                    <i class="fas fa-route"></i> ${from} &rarr; ${to}
+                  </div>
+                  <div style="color: var(--text); font-size: 0.85rem; margin-bottom: 4px; display: flex; gap: 10px;">
+                    <span><i class="fas fa-chair"></i> ${b.seatsBooked} Seat(s)</span>
+                    <span style="color: #10b981; font-weight: bold;">₹${amount}</span>
+                  </div>
+                  <p style="font-size: 0.75rem; color: var(--muted);"><i class="fas fa-calendar-alt"></i> ${date} &bull; <i class="fas fa-clock"></i> ${time} &bull; ID: ${b._id.slice(-8).toUpperCase()}</p>
+                </div>
+              </div>
+            `;
+          }).join("");
+          
+          document.getElementById('totalAmount').textContent = `₹${totalSum}`;
+        } else {
+          historyList.innerHTML = `<div style="color:var(--danger); padding:20px; text-align:center;">${data.message || "Failed to load"}</div>`;
+        }
+      } catch (e) {
+        historyList.innerHTML = `<div style="color:var(--danger); padding:20px; text-align:center;">Network error</div>`;
+      }
+    }
+
+    function switchTab(tab) {
+      if (tab === 'scan') {
+        document.getElementById('scanTab').style.display = 'block';
+        document.getElementById('historyTab').style.display = 'none';
+        document.getElementById('btnScan').classList.add('active');
+        document.getElementById('btnHistory').classList.remove('active');
+      } else {
+        document.getElementById('scanTab').style.display = 'none';
+        document.getElementById('historyTab').style.display = 'block';
+        document.getElementById('btnScan').classList.remove('active');
+        document.getElementById('btnHistory').classList.add('active');
+        loadHistory();
+      }
+    }
+
+  </script>
+</body>
+</html>

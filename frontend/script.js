@@ -39,7 +39,7 @@ function showToast(message, type = 'info') {
 }
 
 // Dynamic Navbar State Updater
-function updateNavbar() {
+async function updateNavbar() {
   const navLinks = document.getElementById("navLinks");
   if (!navLinks) return;
   
@@ -53,18 +53,52 @@ function updateNavbar() {
   `;
   
   if (token) {
-    html += `
-      <li><a href="bookings.html" class="${page === 'bookings.html' ? 'active' : ''}"><i class="fas fa-ticket"></i> My Bookings</a></li>
-      <li><button class="logout-btn-nav" onclick="logout()"><i class="fas fa-right-from-bracket"></i> Logout</button></li>
-    `;
+    // Show placeholder while fetching user details
+    navLinks.innerHTML = `<li><a href="#"><i class="fas fa-spinner fa-spin"></i> Loading...</a></li>`;
+
+    // Fetch and update the wallet balance in the navbar dynamically
+    try {
+      const res = await fetch(`${API_BASE_URL}/auth/me`, {
+        headers: { "Authorization": `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const user = await res.json();
+        
+        if (user.role === 'conductor') {
+          // If conductor, ONLY show Conductor Dashboard and Logout
+          navLinks.innerHTML = `
+            <li><a href="conductor.html" style="color: #10b981;"><i class="fas fa-qrcode"></i> Conductor Dashboard</a></li>
+            <li><button class="logout-btn-nav" onclick="logout()"><i class="fas fa-right-from-bracket"></i> Logout</button></li>
+          `;
+        } else {
+          // If normal user, show everything
+          const balance = user.balance || 0;
+          html = `
+            <li><a href="index.html" class="${page === 'index.html' || page === '' ? 'active' : ''}">Home</a></li>
+            <li><a href="buses.html" class="${page === 'buses.html' ? 'active' : ''}">Buses</a></li>
+            <li><a href="wallet.html" class="nav-wallet-btn ${page === 'wallet.html' ? 'active' : ''}"><i class="fas fa-wallet"></i> Wallet: <span id="navWalletBalance">₹${balance}</span></a></li>
+            <li><a href="bookings.html" class="${page === 'bookings.html' ? 'active' : ''}"><i class="fas fa-ticket"></i> My Bookings</a></li>
+            <li><a href="profile.html" class="${page === 'profile.html' ? 'active' : ''}"><i class="fas fa-user"></i> Profile</a></li>
+            <li><button class="logout-btn-nav" onclick="logout()"><i class="fas fa-right-from-bracket"></i> Logout</button></li>
+          `;
+          navLinks.innerHTML = html;
+        }
+      } else {
+        // If fetch fails but token exists, clear token and fallback to login
+        localStorage.removeItem("token");
+        window.location.reload();
+      }
+    } catch (e) {
+      console.error("Error updating nav:", e);
+      navLinks.innerHTML = html; // Fallback
+    }
   } else {
     html += `
       <li><a href="register.html" class="${page === 'register.html' ? 'active' : ''}">Register</a></li>
       <li><a href="login.html" class="nav-btn ${page === 'login.html' ? 'active' : ''}">Login</a></li>
     `;
+    navLinks.innerHTML = html;
   }
-  
-  navLinks.innerHTML = html;
 }
 
 // Run navbar setup when DOM loads
@@ -191,15 +225,17 @@ if(registerForm){
 
 
     
-if(response.ok){
+        if (response.ok) {
+          try {
+            registerForm.reset();
+          } catch (resetError) {
+            console.error("Error resetting form:", resetError);
+          }
 
-  registerForm.reset();
-
-  setTimeout(() => {
-    window.location.href = "login.html";
-  }, 1500);
-
-}
+          setTimeout(() => {
+            window.location.href = "login.html";
+          }, 1500);
+        }
 
 
 
@@ -420,7 +456,11 @@ if (loginForm) {
 
         // REDIRECT
         setTimeout(() => {
-          window.location.href = "buses.html";
+          if (data.role === 'conductor') {
+            window.location.href = "conductor.html";
+          } else {
+            window.location.href = "buses.html";
+          }
         }, 1500);
       } else {
         showToast(data.message || "Invalid credentials.", "error");
@@ -446,26 +486,22 @@ if (busList) {
   async function loadBuses() {
     try {
       const response = await fetch(`${API_BASE_URL}/buses`);
-      
-      if (!response.ok) {
-        throw new Error("Failed to fetch buses");
-      }
+      if (!response.ok) throw new Error("Failed to fetch buses");
 
       const buses = await response.json();
       busList.innerHTML = "";
 
       if (buses.length === 0) {
-        busList.innerHTML = `
-          <div class="empty-state">
-            <i class="fas fa-bus"></i>
-            <p>No available buses found at this moment.</p>
-          </div>
-        `;
+        busList.innerHTML = `<div class="empty-state"><i class="fas fa-bus"></i><p>No available buses found at this moment.</p></div>`;
         return;
       }
 
       buses.forEach(bus => {
-        // Render styled ticket card
+        const allStops = [bus.from, ...(bus.stops || []), bus.to];
+        const stopsHtml = bus.stops && bus.stops.length
+          ? `<div style="font-size:.75rem;color:var(--text-muted);margin:6px 0"><i class="fas fa-map-pin" style="color:#6366f1;margin-right:4px"></i>${bus.stops.join(' → ')}</div>`
+          : '';
+
         busList.innerHTML += `
           <div class="bus-card">
             <div class="bus-header">
@@ -475,7 +511,7 @@ if (busList) {
               </div>
               <div class="bus-price">₹${bus.price}</div>
             </div>
-            
+
             <div class="bus-route-visual">
               <div class="route-point from">
                 <div class="route-label">From</div>
@@ -490,14 +526,12 @@ if (busList) {
                 <div class="route-name">${bus.to}</div>
               </div>
             </div>
-            
-            <div class="bus-footer">
-              <div class="seats-indicator">
-                <span class="seats-dot ${bus.availableSeats > 10 ? 'available' : bus.availableSeats > 0 ? 'limited' : 'full'}"></span>
-                <span class="seats-count"><span>${bus.availableSeats}</span> seats left</span>
-              </div>
-              <button onclick="bookBus('${bus._id}', this)" ${bus.availableSeats === 0 ? 'disabled' : ''}>
-                <i class="fas fa-ticket"></i> ${bus.availableSeats === 0 ? 'Sold Out' : 'Book Ticket'}
+
+            ${stopsHtml}
+
+            <div class="bus-footer" style="justify-content: flex-end;">
+              <button onclick="openBookingModal('${bus._id}')">
+                <i class="fas fa-ticket"></i> Book Ticket
               </button>
             </div>
           </div>
@@ -505,12 +539,7 @@ if (busList) {
       });
     } catch (error) {
       console.error(error);
-      busList.innerHTML = `
-        <div class="empty-state" style="color: var(--danger);">
-          <i class="fas fa-exclamation-triangle"></i>
-          <p>Failed to load routes. Is the backend server running?</p>
-        </div>
-      `;
+      busList.innerHTML = `<div class="empty-state" style="color:var(--danger);"><i class="fas fa-exclamation-triangle"></i><p>Failed to load routes. Is the backend server running?</p></div>`;
       showToast("Error loading buses from API.", "error");
     }
   }
@@ -519,61 +548,278 @@ if (busList) {
 }
 
 
-// ================= BOOK BUS =================
+// ================= BOOKING MODAL =================
 
-async function bookBus(busId, buttonElement) {
+let _currentBusId   = null;
+let _currentBusData = null;
+let _priceDebounce  = null;
+
+async function openBookingModal(busId) {
   const token = localStorage.getItem("token");
-
   if (!token) {
-    showToast("Please login or register first to reserve tickets.", "warning");
-    setTimeout(() => {
-      window.location.href = "login.html";
-    }, 1500);
+    showToast("Please login first to book a ticket.", "warning");
+    setTimeout(() => { window.location.href = "login.html"; }, 1500);
     return;
   }
-  
-  // Disable button and show spinner
-  let originalBtnHTML = "";
-  if (buttonElement) {
-    originalBtnHTML = buttonElement.innerHTML;
-    buttonElement.disabled = true;
-    buttonElement.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Booking...`;
-  }
 
+  _currentBusId = busId;
+
+  // Fetch bus details
   try {
-    const response = await fetch(`${API_BASE_URL}/bookings/book/${busId}`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${token}`
-      },
-      body: JSON.stringify({
-        seatsBooked: 1
-      })
+    const res = await fetch(`${API_BASE_URL}/buses/${busId}`);
+    const bus = await res.json();
+    _currentBusData = bus;
+
+    // Populate modal header
+    document.getElementById("bkBusName").textContent = bus.busName + " · " + bus.departureTime + " → " + bus.arrivalTime;
+    document.getElementById("bkFrom").textContent = bus.from;
+    document.getElementById("bkTo").textContent   = bus.to;
+
+    // Build full stop list: [from, ...stops, to]
+    const allStops = [bus.from, ...(bus.stops || []), bus.to];
+
+    // Populate boarding dropdown (all except last)
+    const boardingSel = document.getElementById("bkBoarding");
+    const droppingSel = document.getElementById("bkDropping");
+    boardingSel.innerHTML = "";
+    droppingSel.innerHTML = "";
+
+    allStops.forEach((stop, i) => {
+      if (i < allStops.length - 1) {
+        boardingSel.innerHTML += `<option value="${stop}">${stop}</option>`;
+      }
+      if (i > 0) {
+        droppingSel.innerHTML += `<option value="${stop}">${stop}</option>`;
+      }
     });
 
-    const data = await response.json();
+    // Default: first → last
+    boardingSel.value = allStops[0];
+    droppingSel.value = allStops[allStops.length - 1];
 
-    if (response.ok) {
-      showToast(data.message || "Ticket booked successfully!", "success");
-      
-      // Reload page after a delay to display updated seats
-      setTimeout(() => {
-        location.reload();
-      }, 1500);
+    document.getElementById("bkWarning").style.display = "none";
+    document.getElementById("bkConfirmBtn").disabled = false;
+
+    document.getElementById("bookingModal").classList.add("open");
+    updatePrice();
+  } catch (e) {
+    showToast("Failed to load bus details.", "error");
+  }
+}
+
+function closeBookingModal() {
+  document.getElementById("bookingModal").classList.remove("open");
+  _currentBusId   = null;
+  _currentBusData = null;
+}
+
+function closeTicketModal() {
+  const modal = document.getElementById("ticketSuccessModal");
+  if (modal) modal.classList.remove("open");
+  location.reload(); // Reload after success modal is closed to refresh seats/wallet
+}
+
+// Click outside to close
+document.addEventListener("DOMContentLoaded", () => {
+  const overlay = document.getElementById("bookingModal");
+  if (overlay) overlay.addEventListener("click", e => { if (e.target === overlay) closeBookingModal(); });
+  
+  const ticketOverlay = document.getElementById("ticketSuccessModal");
+  if (ticketOverlay) ticketOverlay.addEventListener("click", e => { if (e.target === ticketOverlay) closeTicketModal(); });
+});
+
+async function updatePrice() {
+  clearTimeout(_priceDebounce);
+  _priceDebounce = setTimeout(async () => {
+    const token = localStorage.getItem("token");
+    if (!_currentBusId || !token) return;
+
+    const boarding = document.getElementById("bkBoarding").value;
+    const dropping = document.getElementById("bkDropping").value;
+    const seats    = 1;
+
+    // Validate boarding < dropping
+    const allStops = [_currentBusData.from, ...(_currentBusData.stops || []), _currentBusData.to];
+    const bIdx = allStops.indexOf(boarding);
+    const dIdx = allStops.indexOf(dropping);
+
+    const warnEl = document.getElementById("bkWarning");
+    if (dIdx <= bIdx) {
+      document.getElementById("bkWarningText").textContent = "Dropping point must be after the boarding point.";
+      warnEl.style.display = "block";
+      document.getElementById("bkConfirmBtn").disabled = true;
+      return;
     } else {
-      showToast(data.message || "Failed to book ticket.", "error");
-      if (buttonElement) {
-        buttonElement.disabled = false;
-        buttonElement.innerHTML = originalBtnHTML;
-      }
+      warnEl.style.display = "none";
+      document.getElementById("bkConfirmBtn").disabled = false;
     }
-  } catch (error) {
-    console.error(error);
-    showToast("Connection error while reserving ticket.", "error");
-    if (buttonElement) {
-      buttonElement.disabled = false;
-      buttonElement.innerHTML = originalBtnHTML;
+
+    try {
+      const res  = await fetch(`${API_BASE_URL}/bookings/calculate-price/${_currentBusId}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+        body: JSON.stringify({ seatsBooked: seats, boardingPoint: boarding, droppingPoint: dropping })
+      });
+      const data = await res.json();
+
+      document.getElementById("bkAgeGroup").innerHTML     = `<i class="fas fa-user"></i> ${data.ageGroup || "Standard"}`;
+      document.getElementById("bkPricePerSeat").textContent = `₹${data.pricePerSeat}`;
+      document.getElementById("bkTotal").textContent        = `₹${data.totalPrice}`;
+    } catch (e) {
+      console.error(e);
+    }
+  }, 300);
+}
+
+async function confirmBooking() {
+  const token = localStorage.getItem("token");
+  if (!token || !_currentBusId) return;
+
+  const boarding = document.getElementById("bkBoarding").value;
+  const dropping = document.getElementById("bkDropping").value;
+  const seats    = 1;
+  const payMethod = document.querySelector('input[name="payMethod"]:checked')?.value || 'razorpay';
+
+  const btn = document.getElementById("bkConfirmBtn");
+  btn.disabled = true;
+  btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Processing...`;
+
+  if (payMethod === 'razorpay') {
+    // ── RAZORPAY FLOW ──
+    try {
+      // Step 1: Create Razorpay order
+      const orderRes = await fetch(`${API_BASE_URL}/payment/create-order`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+        body: JSON.stringify({ busId: _currentBusId, seatsBooked: seats, boardingPoint: boarding, droppingPoint: dropping })
+      });
+      const orderData = await orderRes.json();
+
+      if (!orderRes.ok) {
+        showToast(orderData.message || "Failed to create order.", "error");
+        btn.disabled = false;
+        btn.innerHTML = `<i class="fas fa-shield-halved"></i> Pay Securely`;
+        return;
+      }
+
+      // Step 2: Open Razorpay checkout
+      const options = {
+        key: orderData.key,
+        amount: orderData.amountPaise,
+        currency: orderData.currency,
+        name: "BusFlux",
+        description: `${orderData.busName} - ${seats} seat(s)`,
+        order_id: orderData.orderId,
+        image: "https://img.icons8.com/fluency/96/bus.png",
+        prefill: {
+          name: orderData.userName || "BusFlux User",
+          email: orderData.userEmail || "user@example.com",
+          contact: orderData.userPhone || "9999999999"
+        },
+        theme: {
+          color: "#6366f1"
+        },
+        config: {
+          display: {
+            blocks: {
+              upi: { name: "UPI", instruments: [{ method: "upi" }] },
+              other: { name: "Other Payment Modes", instruments: [{ method: "card" }, { method: "netbanking" }, { method: "wallet" }] }
+            },
+            sequence: ["block.upi", "block.other"],
+            preferences: { show_default_blocks: false }
+          }
+        },
+        handler: async function(response) {
+          // Step 3: Verify payment on backend
+          try {
+            const verifyRes = await fetch(`${API_BASE_URL}/payment/verify`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+              body: JSON.stringify({
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+                busId: _currentBusId,
+                seatsBooked: seats,
+                boardingPoint: boarding,
+                droppingPoint: dropping
+              })
+            });
+            const verifyData = await verifyRes.json();
+
+            if (verifyRes.ok) {
+              showToast(`✅ Payment successful! ₹${verifyData.totalPrice} paid via Razorpay. Ticket booked!`, "success");
+              closeBookingModal();
+              
+              const tId = verifyData.booking ? verifyData.booking._id.toString().slice(-8).toUpperCase() : "";
+              document.getElementById("ticketQR").src = verifyData.qrCode || "";
+              document.getElementById("ticketIdDisplay").textContent = tId;
+              document.getElementById("ticketRouteDisplay").textContent = `${boarding} → ${dropping}`;
+              
+              document.getElementById("ticketSuccessModal").classList.add("open");
+            } else {
+              showToast(verifyData.message || "Payment verification failed.", "error");
+              btn.disabled = false;
+              btn.innerHTML = `<i class="fas fa-shield-halved"></i> Pay Securely`;
+            }
+          } catch (e) {
+            showToast("Verification error. Contact support.", "error");
+            btn.disabled = false;
+            btn.innerHTML = `<i class="fas fa-shield-halved"></i> Pay Securely`;
+          }
+        },
+        modal: {
+          ondismiss: function() {
+            showToast("Payment cancelled.", "warning");
+            btn.disabled = false;
+            btn.innerHTML = `<i class="fas fa-shield-halved"></i> Pay Securely`;
+          }
+        }
+      };
+
+      const rzp = new Razorpay(options);
+      rzp.on('payment.failed', function(response) {
+        showToast(`Payment failed: ${response.error.description}`, "error");
+        btn.disabled = false;
+        btn.innerHTML = `<i class="fas fa-shield-halved"></i> Pay Securely`;
+      });
+      rzp.open();
+
+    } catch (e) {
+      console.error(e);
+      showToast("Network error creating payment.", "error");
+      btn.disabled = false;
+      btn.innerHTML = `<i class="fas fa-shield-halved"></i> Pay Securely`;
+    }
+  } else {
+    // ── WALLET FLOW (existing) ──
+    try {
+      const res = await fetch(`${API_BASE_URL}/bookings/book/${_currentBusId}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+        body: JSON.stringify({ seatsBooked: seats, boardingPoint: boarding, droppingPoint: dropping })
+      });
+      const data = await res.json();
+
+      if (res.ok) {
+        showToast(`✅ Ticket booked! ₹${data.totalPrice} deducted from wallet. ${boarding} → ${dropping}`, "success");
+        closeBookingModal();
+        
+        const tId = data.booking ? data.booking._id.toString().slice(-8).toUpperCase() : "";
+        document.getElementById("ticketQR").src = data.qrCode || "";
+        document.getElementById("ticketIdDisplay").textContent = tId;
+        document.getElementById("ticketRouteDisplay").textContent = `${boarding} → ${dropping}`;
+        
+        document.getElementById("ticketSuccessModal").classList.add("open");
+      } else {
+        showToast(data.message || "Booking failed.", "error");
+        btn.disabled = false;
+        btn.innerHTML = `<i class="fas fa-shield-halved"></i> Pay Securely`;
+      }
+    } catch (e) {
+      showToast("Connection error.", "error");
+      btn.disabled = false;
+      btn.innerHTML = `<i class="fas fa-shield-halved"></i> Pay Securely`;
     }
   }
 }
@@ -624,57 +870,72 @@ if (bookingList) {
       }
 
       bookings.forEach(booking => {
-        // Safe check for nested fields in case database objects are incomplete
-        const busName = booking.busId ? booking.busId.busName : "Bus Route";
-        const fromLoc = booking.busId ? booking.busId.from : "N/A";
-        const toLoc = booking.busId ? booking.busId.to : "N/A";
+        const busName        = booking.busId ? booking.busId.busName : "Bus Route";
+        const fromLoc        = booking.boardingPoint || (booking.busId ? booking.busId.from : "N/A");
+        const toLoc          = booking.droppingPoint || (booking.busId ? booking.busId.to   : "N/A");
+        const fullFrom       = booking.busId ? booking.busId.from : "";
+        const fullTo         = booking.busId ? booking.busId.to   : "";
         const ticketIdSuffix = booking._id ? booking._id.substring(booking._id.length - 8).toUpperCase() : "XXXX";
+        const isPartial      = fromLoc !== fullFrom || toLoc !== fullTo;
 
-        // Render boarding pass card
         bookingList.innerHTML += `
           <div class="booking-card">
             <div class="ticket-header">
               <span class="ticket-brand"><i class="fas fa-bus-alt"></i> BusFlux Boarding Pass</span>
               <span class="ticket-status">Confirmed</span>
             </div>
-            
+
             <div class="ticket-body">
               <div class="ticket-grid">
                 <div class="ticket-info-item">
                   <span class="info-label">Bus Service</span>
                   <span class="info-value">${busName}</span>
                 </div>
-                <div class="ticket-info-item" style="text-align: right;">
-                  <span class="info-label">Seat Quantity</span>
+                <div class="ticket-info-item" style="text-align:right;">
+                  <span class="info-label">Seats</span>
                   <span class="info-value">${booking.seatsBooked} seat(s)</span>
                 </div>
               </div>
-              
+
               <div class="ticket-divider">
                 <div class="divider-notch left"></div>
                 <div class="divider-line"></div>
                 <div class="divider-notch right"></div>
               </div>
-              
+
               <div class="ticket-grid">
                 <div class="ticket-info-item">
-                  <span class="info-label">Route</span>
-                  <span class="info-value">${fromLoc} ➔ ${toLoc}</span>
+                  <span class="info-label"><i class="fas fa-map-pin" style="color:#10b981;margin-right:3px"></i>Boarding</span>
+                  <span class="info-value" style="color:#10b981;font-weight:700">${fromLoc}</span>
                 </div>
-                <div class="ticket-info-item" style="text-align: right;">
+                <div class="ticket-info-item" style="text-align:right;">
+                  <span class="info-label"><i class="fas fa-location-dot" style="color:#f43f5e;margin-right:3px"></i>Dropping</span>
+                  <span class="info-value" style="color:#f43f5e;font-weight:700">${toLoc}</span>
+                </div>
+              </div>
+
+              ${isPartial ? `
+              <div style="font-size:.74rem;color:#64748b;margin-top:8px;text-align:center;">
+                <i class="fas fa-route" style="margin-right:4px"></i>Full route: ${fullFrom} → ${fullTo}
+              </div>` : ''}
+
+              <div class="ticket-grid" style="margin-top:12px;">
+                <div class="ticket-info-item">
                   <span class="info-label">Total Paid</span>
-                  <span class="info-value" style="color: #a855f7; font-weight: 800;">₹${booking.totalPrice}</span>
+                  <span class="info-value" style="color:#a855f7;font-weight:800;font-size:1.1rem">₹${booking.totalPrice}</span>
                 </div>
               </div>
             </div>
-            
-            <div class="ticket-footer">
-              <div class="barcode-aesthetic"></div>
-              <div class="ticket-number">TICKET #${ticketIdSuffix}</div>
+
+            <div class="ticket-footer" style="display:flex; flex-direction:column; align-items:center; padding: 20px;">
+              <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${ticketIdSuffix}&color=000000&bgcolor=ffffff" alt="Ticket QR Code" style="width: 120px; height: 120px; border: 6px solid #fff; border-radius: 8px; margin-bottom: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.3);">
+              <div class="ticket-number" style="margin-bottom: 15px;">TICKET #${ticketIdSuffix}</div>
+              <button onclick="downloadQR('${ticketIdSuffix}')" style="background: linear-gradient(135deg, #10b981, #059669); color: #fff; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.2s;"><i class="fas fa-download"></i> Download QR</button>
             </div>
           </div>
         `;
       });
+
     } catch (error) {
       console.error(error);
       bookingList.innerHTML = `
@@ -686,6 +947,26 @@ if (bookingList) {
       showToast("Error loading bookings from API.", "error");
     }
   }
+
+  window.downloadQR = async function(ticketId) {
+    try {
+      // Using an open CORS endpoint to fetch the image as a Blob so we can trigger a download
+      const response = await fetch(`https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${ticketId}&color=000000&bgcolor=ffffff`);
+      if (!response.ok) throw new Error("Network response was not ok");
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `BusFlux-Pass-${ticketId}.png`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      a.remove();
+    } catch (err) {
+      console.error("Download failed", err);
+      showToast("Failed to download QR code. Please try saving the image manually.", "error");
+    }
+  };
 
   loadBookings();
 }
@@ -851,4 +1132,253 @@ async function resetPassword(){
   }
 
 }
+
+
+
+// ================= WALLET MANAGEMENT =================
+let userBonusPercent = 0.05; // default 5%
+let activePassName = "Standard Pass";
+
+async function loadWallet() {
+  const token = localStorage.getItem("token");
+  if (!token) {
+    showToast("Please login to access the wallet dashboard.", "warning");
+    setTimeout(() => { window.location.href = "login.html"; }, 1500);
+    return;
+  }
+
+  try {
+    const res = await fetch(`${API_BASE_URL}/auth/me`, {
+      headers: { "Authorization": `Bearer ${token}` }
+    });
+    
+    if (!res.ok) {
+      if (res.status === 401) {
+        localStorage.removeItem("token");
+        window.location.href = "login.html";
+        return;
+      }
+      throw new Error("Failed to fetch wallet info");
+    }
+
+    const user = await res.json();
+    
+    // UI elements to update:
+    document.getElementById("walletBalance").textContent = `₹${user.balance || 0}`;
+    document.getElementById("profileName").textContent = user.name || "Customer";
+    document.getElementById("profileEmail").textContent = user.email || "";
+    document.getElementById("profileAgeGroup").textContent = user.ageGroup || "Standard";
+
+    // Compute pass based on age
+    const age = user.age;
+    if ((age >= 5 && age <= 14) || age >= 60) {
+      userBonusPercent = 0.30;
+      activePassName = "Golden Pass";
+    } else if (age >= 15 && age <= 24) {
+      userBonusPercent = 0.20;
+      activePassName = "Youth Express Pass";
+    } else {
+      userBonusPercent = 0.05;
+      activePassName = "Standard Pass";
+    }
+
+    const activePassEl = document.getElementById("activePass");
+    if (activePassEl) {
+      activePassEl.textContent = activePassName;
+    }
+    
+    const passBadge = document.getElementById("activePassBadge");
+    if (passBadge) {
+      passBadge.className = `pass-badge ${activePassName.toLowerCase().replace(/ /g, "-")}`;
+      passBadge.innerHTML = `<i class="fas fa-id-card"></i> ${activePassName}`;
+    }
+    
+    const bonusRate = document.getElementById("passBonusRate");
+    if (bonusRate) {
+      bonusRate.textContent = `+${userBonusPercent * 100}% Bonus Wallet Balance`;
+    }
+
+    updateRechargePreview();
+  } catch (error) {
+    console.error(error);
+    showToast("Failed to load wallet dashboard.", "error");
+  }
+}
+
+function selectQuickRecharge(amount) {
+  const input = document.getElementById("rechargeAmount");
+  if (input) input.value = amount;
+  
+  // Highlight quick buttons
+  const buttons = document.querySelectorAll(".quick-amount-btn");
+  buttons.forEach(btn => {
+    if (parseInt(btn.getAttribute("data-val")) === amount) {
+      btn.classList.add("active");
+    } else {
+      btn.classList.remove("active");
+    }
+  });
+
+  updateRechargePreview();
+}
+
+function handleAmountInput() {
+  // Clear button highlights if custom amount input is altered
+  const input = document.getElementById("rechargeAmount");
+  if (!input) return;
+  const val = parseInt(input.value);
+  const buttons = document.querySelectorAll(".quick-amount-btn");
+  buttons.forEach(btn => {
+    if (parseInt(btn.getAttribute("data-val")) === val) {
+      btn.classList.add("active");
+    } else {
+      btn.classList.remove("active");
+    }
+  });
+  updateRechargePreview();
+}
+
+function updateRechargePreview() {
+  const amountInput = document.getElementById("rechargeAmount");
+  if (!amountInput) return;
+
+  const rawVal = amountInput.value;
+  const val = parseFloat(rawVal) || 0;
+
+  if (val <= 0) {
+    document.getElementById("previewPay").textContent = "₹0";
+    document.getElementById("previewBonus").textContent = "₹0";
+    document.getElementById("previewGet").textContent = "₹0";
+    return;
+  }
+
+  const bonus = Math.round(val * userBonusPercent);
+  const total = Math.round(val + bonus);
+
+  document.getElementById("previewPay").textContent = `₹${val}`;
+  document.getElementById("previewBonus").textContent = `+₹${bonus} (${userBonusPercent * 100}%)`;
+  document.getElementById("previewGet").textContent = `₹${total}`;
+}
+
+async function rechargeWallet(e) {
+  if (e) e.preventDefault();
+  
+  const token = localStorage.getItem("token");
+  if (!token) return;
+
+  const amountInput = document.getElementById("rechargeAmount");
+  if (!amountInput) return;
+  const amount = parseFloat(amountInput.value);
+
+  if (isNaN(amount) || amount <= 0) {
+    showToast("Please enter a valid amount to recharge.", "warning");
+    return;
+  }
+
+  const btn = document.getElementById("rechargeBtn");
+  if (!btn) return;
+  btn.disabled = true;
+  btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Initializing Secure Gateway...`;
+
+  try {
+    // 1. Create Order on Backend
+    const orderRes = await fetch(`${API_BASE_URL}/auth/wallet/create-order`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`
+      },
+      body: JSON.stringify({ amount })
+    });
+    
+    if (!orderRes.ok) {
+      throw new Error("Failed to create order");
+    }
+    
+    const orderData = await orderRes.json();
+
+    // 2. Open Razorpay Checkout
+    const options = {
+      key: "rzp_test_SwpXpk7KNwdCU7", // Replace with your actual key if needed
+      amount: orderData.amount,
+      currency: "INR",
+      name: "BusFlux Wallet",
+      description: "Wallet Recharge",
+      image: "https://cdn-icons-png.flaticon.com/512/3448/3448339.png",
+      order_id: orderData.id,
+      config: {
+        display: {
+          blocks: {
+            upi: {
+              name: "Pay via Google Pay / UPI",
+              instruments: [
+                {
+                  method: "upi"
+                }
+              ]
+            }
+          },
+          sequence: ["block.upi"],
+          preferences: {
+            show_default_blocks: true
+          }
+        }
+      },
+      handler: async function (response) {
+        try {
+          // 3. Verify Payment on Backend
+          showToast("Verifying payment...", "info");
+          const verifyRes = await fetch(`${API_BASE_URL}/auth/wallet/verify-payment`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${token}`
+            },
+            body: JSON.stringify({
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_signature: response.razorpay_signature,
+              amount: amount,
+              method: "Razorpay"
+            })
+          });
+
+          const verifyData = await verifyRes.json();
+          if (verifyRes.ok) {
+            showToast(`Payment Successful! 🎉 Earned ₹${verifyData.bonus} bonus.`, "success");
+            amountInput.value = "";
+            document.querySelectorAll(".quick-amount-btn").forEach(b => b.classList.remove("active"));
+            await loadWallet();
+          } else {
+            showToast(verifyData.message || "Payment verification failed.", "error");
+          }
+        } catch (err) {
+          showToast("Error verifying payment on server.", "error");
+        }
+      },
+      prefill: {
+        name: orderData.userName || "BusFlux User",
+        email: orderData.userEmail || "user@example.com",
+        contact: orderData.userPhone || "9999999999"
+      },
+      theme: {
+        color: "#6366f1"
+      }
+    };
+
+    const rzp = new window.Razorpay(options);
+    rzp.on('payment.failed', function (response){
+      showToast("Payment Failed or Cancelled.", "error");
+    });
+    rzp.open();
+    
+  } catch (err) {
+    console.error(err);
+    showToast("Error connecting to payment gateway.", "error");
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = `<i class="fas fa-wallet"></i> Recharge Wallet Now`;
+  }
+}
+
 
