@@ -573,6 +573,11 @@ button:active {
   letter-spacing: 0.5px;
 }
 
+.ticket-status.failed {
+  background: rgba(244, 63, 94, 0.15);
+  color: var(--danger);
+}
+
 .ticket-body {
   padding: 24px;
   display: flex;

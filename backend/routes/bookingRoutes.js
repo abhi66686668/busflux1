@@ -150,7 +150,7 @@ router.post("/calculate-price/:busId", auth, async (req, res) => {
 // ================= USER BOOKINGS =================
 router.get("/my-bookings", auth, async (req, res) => {
   try {
-    const bookings = await Booking.find({ userId: req.user.id }).populate("busId");
+    const bookings = await Booking.find({ userId: req.user.id }).sort({ createdAt: -1 }).populate("busId").populate("scannedBy", "name email");
     res.status(200).json(bookings);
   } catch (error) {
     res.status(500).json({ message: error.message });

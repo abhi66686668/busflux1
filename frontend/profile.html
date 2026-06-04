@@ -145,6 +145,26 @@
 
       <button type="submit" class="save-btn" id="saveBtn"><i class="fas fa-save"></i> Save Changes</button>
     </form>
+
+    <!-- ══════════ PERMANENT BOARDING PASS QR CODE ══════════ -->
+    <div style="margin-top: 35px; padding-top: 25px; border-top: 1px dashed rgba(255,255,255,0.1); text-align: center;">
+      <h3 style="font-size: 1.25rem; font-weight: 800; background: linear-gradient(135deg, #6366f1, #a855f7); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 8px;">
+        <i class="fas fa-id-card"></i> My Permanent Boarding Pass
+      </h3>
+      <p style="color: var(--muted); font-size: 0.82rem; margin-bottom: 20px; line-height: 1.4;">
+        Present this QR code to the conductor when boarding. The ride fare will be automatically deducted from your wallet balance.
+      </p>
+      
+      <div style="background: #fff; padding: 15px; border-radius: 16px; display: inline-block; box-shadow: 0 4px 15px rgba(0,0,0,0.3); border: 2px solid rgba(99,102,241,0.2);">
+        <img id="profileQrImage" src="https://cdn-icons-png.flaticon.com/512/149/149071.png" alt="Profile QR Code" style="width: 160px; height: 160px; display: block;">
+      </div>
+      
+      <div style="margin-top: 15px;">
+        <button type="button" class="btn-secondary" onclick="downloadProfileQR()" style="width: auto; display: inline-flex; padding: 8px 16px; font-size: 0.9rem; margin-top: 0;">
+          <i class="fas fa-download"></i> Download QR Pass
+        </button>
+      </div>
+    </div>
   </div>
 
   <script src="script.js"></script>
@@ -173,11 +193,29 @@
           if (user.userPhoto) {
             document.getElementById('profileImage').src = "/" + user.userPhoto;
           }
+          
+          if (user.profileQr) {
+            document.getElementById('profileQrImage').src = user.profileQr;
+          }
         }
       } catch (err) {
         console.error("Failed to fetch profile");
       }
     });
+
+    window.downloadProfileQR = function() {
+      const qrImg = document.getElementById('profileQrImage');
+      if (!qrImg || !qrImg.src || qrImg.src.startsWith('https://cdn-icons-png')) {
+        alert("QR Code not loaded yet.");
+        return;
+      }
+      const a = document.createElement("a");
+      a.href = qrImg.src;
+      a.download = `BusFlux-Profile-Pass-${document.getElementById('email').value}.png`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    };
 
     function previewImage(event) {
       if (event.target.files && event.target.files[0]) {

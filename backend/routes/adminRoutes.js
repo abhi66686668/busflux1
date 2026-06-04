@@ -41,11 +41,11 @@ router.get("/stats", adminAuth, async (req, res) => {
   try {
     const totalUsers    = await User.countDocuments({ role: "user" });
     const totalBuses    = await Bus.countDocuments();
-    const totalBookings = await Booking.countDocuments();
+    const totalBookings = await Booking.countDocuments({ status: { $ne: "failed" } });
     const activeBuses   = await Bus.countDocuments({ isActive: true });
 
     // Revenue
-    const bookings = await Booking.find();
+    const bookings = await Booking.find({ status: { $ne: "failed" } });
     const totalRevenue = bookings.reduce((sum, b) => sum + (b.totalPrice || 0), 0);
 
     // Users by age group

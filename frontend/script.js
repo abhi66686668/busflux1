@@ -70,6 +70,12 @@ async function updateNavbar() {
             <li><a href="conductor.html" style="color: #10b981;"><i class="fas fa-qrcode"></i> Conductor Dashboard</a></li>
             <li><button class="logout-btn-nav" onclick="logout()"><i class="fas fa-right-from-bracket"></i> Logout</button></li>
           `;
+        } else if (user.role === 'admin') {
+          // If admin, ONLY show Admin Dashboard and Logout
+          navLinks.innerHTML = `
+            <li><a href="admin.html" style="color: #6366f1;"><i class="fas fa-shield-halved"></i> Admin Dashboard</a></li>
+            <li><button class="logout-btn-nav" onclick="logout()"><i class="fas fa-right-from-bracket"></i> Logout</button></li>
+          `;
         } else {
           // If normal user, show everything
           const balance = user.balance || 0;
@@ -450,6 +456,9 @@ if (loginForm) {
       if (response.ok && data.token) {
         // SAVE TOKEN
         localStorage.setItem("token", data.token);
+        if (data.role === 'admin') {
+          localStorage.setItem("adminToken", data.token);
+        }
 
         showToast("Logged in successfully!", "success");
         document.getElementById("loginMessage").innerText = "";
@@ -458,6 +467,8 @@ if (loginForm) {
         setTimeout(() => {
           if (data.role === 'conductor') {
             window.location.href = "conductor.html";
+          } else if (data.role === 'admin') {
+            window.location.href = "admin.html";
           } else {
             window.location.href = "buses.html";
           }
@@ -530,9 +541,7 @@ if (busList) {
             ${stopsHtml}
 
             <div class="bus-footer" style="justify-content: flex-end;">
-              <button onclick="openBookingModal('${bus._id}')">
-                <i class="fas fa-ticket"></i> Book Ticket
-              </button>
+              <span style="font-size:0.85rem;color:var(--text-muted);font-weight:600;"><i class="fas fa-id-card"></i> Spot Billing & Pass Deduction Only</span>
             </div>
           </div>
         `;
@@ -878,11 +887,30 @@ if (bookingList) {
         const ticketIdSuffix = booking._id ? booking._id.substring(booking._id.length - 8).toUpperCase() : "XXXX";
         const isPartial      = fromLoc !== fullFrom || toLoc !== fullTo;
 
+        const isFailed = booking.status === "failed";
+        const statusText = isFailed ? "Ride Declined (Insufficient Balance)" : "Confirmed";
+        const statusClass = isFailed ? "ticket-status failed" : "ticket-status";
+        const cardStyle = isFailed ? "border: 1.5px solid rgba(244,63,94,0.3); opacity: 0.95;" : "";
+        const headerGradient = isFailed ? "background: linear-gradient(90deg, #7f1d1d 0%, #991b1b 100%);" : "background: linear-gradient(90deg, #1e1b4b 0%, #312e81 100%);";
+        const footerHtml = isFailed ? `
+            <div class="ticket-footer" style="display:flex; flex-direction:column; align-items:center; padding: 20px; background: rgba(244,63,94,0.05); border-top: 1px solid rgba(255,255,255,0.04);">
+              <i class="fas fa-circle-xmark" style="color: #f43f5e; font-size: 2.2rem; margin-bottom: 8px;"></i>
+              <div style="color: #f43f5e; font-weight: 700; font-size: 0.9rem;">Deduction Failed</div>
+              <div style="font-size: 0.78rem; color: var(--text-muted); text-align: center; margin-top: 3px;">Insufficient wallet balance for this trip.</div>
+            </div>
+        ` : `
+            <div class="ticket-footer" style="display:flex; flex-direction:column; align-items:center; padding: 20px;">
+              <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${ticketIdSuffix}&color=000000&bgcolor=ffffff" alt="Ticket QR Code" style="width: 120px; height: 120px; border: 6px solid #fff; border-radius: 8px; margin-bottom: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.3);">
+              <div class="ticket-number" style="margin-bottom: 15px;">TICKET #${ticketIdSuffix}</div>
+              <button onclick="downloadQR('${ticketIdSuffix}')" style="background: linear-gradient(135deg, #10b981, #059669); color: #fff; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.2s;"><i class="fas fa-download"></i> Download QR</button>
+            </div>
+        `;
+
         bookingList.innerHTML += `
-          <div class="booking-card">
-            <div class="ticket-header">
+          <div class="booking-card" style="${cardStyle}">
+            <div class="ticket-header" style="${headerGradient}">
               <span class="ticket-brand"><i class="fas fa-bus-alt"></i> BusFlux Boarding Pass</span>
-              <span class="ticket-status">Confirmed</span>
+              <span class="${statusClass}">${statusText}</span>
             </div>
 
             <div class="ticket-body">
@@ -919,19 +947,53 @@ if (bookingList) {
                 <i class="fas fa-route" style="margin-right:4px"></i>Full route: ${fullFrom} → ${fullTo}
               </div>` : ''}
 
-              <div class="ticket-grid" style="margin-top:12px;">
+              <!-- Travel Times & Base Fare Row -->
+              <div class="ticket-grid" style="margin-top: 12px; padding-top: 12px; border-top: 1px dashed rgba(255,255,255,0.08);">
                 <div class="ticket-info-item">
-                  <span class="info-label">Total Paid</span>
-                  <span class="info-value" style="color:#a855f7;font-weight:800;font-size:1.1rem">₹${booking.totalPrice}</span>
+                  <span class="info-label"><i class="fas fa-clock" style="margin-right:4px;"></i>Departure</span>
+                  <span class="info-value" style="font-size:0.88rem;">${booking.busId ? booking.busId.departureTime || '—' : '—'}</span>
                 </div>
+                <div class="ticket-info-item" style="text-align:right;">
+                  <span class="info-label"><i class="fas fa-clock" style="margin-right:4px;"></i>Arrival</span>
+                  <span class="info-value" style="font-size:0.88rem;">${booking.busId ? booking.busId.arrivalTime || '—' : '—'}</span>
+                </div>
+              </div>
+
+              <!-- Price breakdown & deduction confirmation -->
+              <div class="ticket-grid" style="margin-top: 12px; padding-top: 12px; border-top: 1px dashed rgba(255,255,255,0.08);">
+                <div class="ticket-info-item">
+                  <span class="info-label">Base Bus Price</span>
+                  <span class="info-value" style="font-size:0.88rem;">₹${booking.busId ? booking.busId.price || '—' : '—'}</span>
+                </div>
+                <div class="ticket-info-item" style="text-align:right;">
+                  <span class="info-label">${isFailed ? 'Deduction Failed' : 'Wallet Deduction'}</span>
+                  <span class="info-value" style="color:${isFailed ? '#f43f5e' : '#10b981'};font-weight:800;font-size:1rem;">₹${booking.totalPrice}</span>
+                </div>
+              </div>
+
+              <!-- Processing Conductor or Online Info -->
+              <div class="ticket-grid" style="margin-top: 12px; padding-top: 12px; border-top: 1px dashed rgba(255,255,255,0.08);">
+                ${booking.scannedBy ? `
+                  <div class="ticket-info-item" style="grid-column: 1 / -1; text-align: left;">
+                    <span class="info-label"><i class="fas fa-user-tie" style="margin-right:4px; color:#a855f7;"></i>Processed by Conductor</span>
+                    <span class="info-value" style="font-size:0.82rem; font-weight:600;">${booking.scannedBy.name} (${booking.scannedBy.email})</span>
+                    <span style="font-size: 0.72rem; color: var(--text-muted); display: block; margin-top: 3px;">
+                      <i class="fas fa-calendar-alt" style="margin-right:3px;"></i>${booking.scannedAt ? new Date(booking.scannedAt).toLocaleString('en-IN', {day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit'}) : new Date(booking.createdAt).toLocaleString('en-IN', {day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit'})}
+                    </span>
+                  </div>
+                ` : `
+                  <div class="ticket-info-item" style="grid-column: 1 / -1; text-align: left;">
+                    <span class="info-label"><i class="fas fa-globe" style="margin-right:4px; color:#6366f1;"></i>Booking Channel</span>
+                    <span class="info-value" style="font-size:0.82rem; font-weight:600;">Self-Booked Online</span>
+                    <span style="font-size: 0.72rem; color: var(--text-muted); display: block; margin-top: 3px;">
+                      <i class="fas fa-calendar-alt" style="margin-right:3px;"></i>${new Date(booking.createdAt).toLocaleString('en-IN', {day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit'})}
+                    </span>
+                  </div>
+                `}
               </div>
             </div>
 
-            <div class="ticket-footer" style="display:flex; flex-direction:column; align-items:center; padding: 20px;">
-              <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${ticketIdSuffix}&color=000000&bgcolor=ffffff" alt="Ticket QR Code" style="width: 120px; height: 120px; border: 6px solid #fff; border-radius: 8px; margin-bottom: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.3);">
-              <div class="ticket-number" style="margin-bottom: 15px;">TICKET #${ticketIdSuffix}</div>
-              <button onclick="downloadQR('${ticketIdSuffix}')" style="background: linear-gradient(135deg, #10b981, #059669); color: #fff; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.2s;"><i class="fas fa-download"></i> Download QR</button>
-            </div>
+            ${footerHtml}
           </div>
         `;
       });
@@ -976,6 +1038,7 @@ if (bookingList) {
 
 function logout() {
   localStorage.removeItem("token");
+  localStorage.removeItem("adminToken");
   showToast("Logged out successfully.", "success");
 
   // Redirect after delay

@@ -353,10 +353,10 @@
       <table>
         <thead>
           <tr>
-            <th>Ticket #</th><th>Passenger</th><th>Age Group</th><th>Bus</th><th>Route</th><th>Seats</th><th>Amount</th><th>Date</th>
+            <th>Ticket #</th><th>Passenger</th><th>Age Group</th><th>Bus</th><th>Route</th><th>Seats</th><th>Amount</th><th>Status</th><th>Date</th>
           </tr>
         </thead>
-        <tbody id="bookingsBody"><tr><td colspan="8" style="text-align:center;padding:30px;color:var(--muted)">Loading...</td></tr></tbody>
+        <tbody id="bookingsBody"><tr><td colspan="9" style="text-align:center;padding:30px;color:var(--muted)">Loading...</td></tr></tbody>
       </table>
     </div>
   </div>
@@ -661,8 +661,8 @@ async function loadBuses() {
     if (!buses.length) { grid.innerHTML = `<div class="empty"><i class="fas fa-bus"></i><p>No buses added yet</p></div>`; return; }
     grid.innerHTML = buses.map(b => `
       <div class="bus-card-admin">
-        ${b.busPhoto
-          ? `<img class="bca-img" src="/${b.busPhoto.replace(/\\/g,'/')}" onerror="this.style.display='none'" alt="Bus">`
+        \${b.busPhoto
+          ? `<img class="bca-img" src="/\${b.busPhoto.replace(/\\\\/g,'/')}" onerror="this.style.display='none'" alt="Bus">`
           : `<div class="bca-img-placeholder"><i class="fas fa-bus fa-3x"></i></div>`}
         <div class="bca-body">
           <div class="bca-top">
@@ -681,11 +681,11 @@ async function loadBuses() {
           ${b.stops?.length ? `<div style="font-size:.75rem;color:var(--muted)"><i class="fas fa-map-pin" style="margin-right:4px"></i>${b.stops.join(' → ')}</div>` : ''}
           <div class="bca-staff">
             <div class="staff-mini">
-              ${b.driverPhoto ? `<img src="/${b.driverPhoto.replace(/\\/g,'/')}" onerror="this.outerHTML='<div style=width:32px;height:32px;border-radius:50%;background:rgba(99,102,241,.15);display:flex;align-items:center;justify-content:center><i class=fas\\ fa-user style=color:var(--primary);font-size:.8rem></i></div>'" alt="">` : `<div style="width:32px;height:32px;border-radius:50%;background:rgba(99,102,241,.15);display:flex;align-items:center;justify-content:center"><i class="fas fa-user" style="color:var(--primary);font-size:.8rem"></i></div>`}
+              \${b.driverPhoto ? `<img src="/\${b.driverPhoto.replace(/\\\\/g,'/')}" onerror="this.outerHTML='<div style=width:32px;height:32px;border-radius:50%;background:rgba(99,102,241,.15);display:flex;align-items:center;justify-content:center><i class=fas\\\\ fa-user style=color:var(--primary);font-size:.8rem></i></div>'" alt="">` : `<div style="width:32px;height:32px;border-radius:50%;background:rgba(99,102,241,.15);display:flex;align-items:center;justify-content:center"><i class="fas fa-user" style="color:var(--primary);font-size:.8rem"></i></div>`}
               <div class="si-info"><div class="si-role">Driver</div><div class="si-name">${b.driverName||'—'}</div>${b.driverPhone?`<div style="font-size:.68rem;color:var(--muted)">${b.driverPhone}</div>`:''}</div>
             </div>
             <div class="staff-mini">
-              ${b.conductorPhoto ? `<img src="/${b.conductorPhoto.replace(/\\/g,'/')}" onerror="this.outerHTML='<div style=width:32px;height:32px;border-radius:50%;background:rgba(168,85,247,.15);display:flex;align-items:center;justify-content:center><i class=fas\\ fa-user style=color:var(--primary2);font-size:.8rem></i></div>'" alt="">` : `<div style="width:32px;height:32px;border-radius:50%;background:rgba(168,85,247,.15);display:flex;align-items:center;justify-content:center"><i class="fas fa-user" style="color:var(--primary2);font-size:.8rem"></i></div>`}
+              \${b.conductorPhoto ? `<img src="/\${b.conductorPhoto.replace(/\\\\/g,'/')}" onerror="this.outerHTML='<div style=width:32px;height:32px;border-radius:50%;background:rgba(168,85,247,.15);display:flex;align-items:center;justify-content:center><i class=fas\\\\ fa-user style=color:var(--primary2);font-size:.8rem></i></div>'" alt="">` : `<div style="width:32px;height:32px;border-radius:50%;background:rgba(168,85,247,.15);display:flex;align-items:center;justify-content:center"><i class="fas fa-user" style="color:var(--primary2);font-size:.8rem"></i></div>`}
               <div class="si-info"><div class="si-role">Conductor</div><div class="si-name">${b.conductorName||'—'}</div>${b.conductorPhone?`<div style="font-size:.68rem;color:var(--muted)">${b.conductorPhone}</div>`:''}</div>
             </div>
           </div>
@@ -741,7 +741,7 @@ function renderUsers(users) {
   grid.innerHTML = users.map(u => `
     <div class="user-card">
       ${u.userPhoto
-        ? `<img class="uc-avatar" src="/${u.userPhoto.replace(/\\/g,'/')}" onerror="this.style.display='none'" alt="">`
+        ? `<img class="uc-avatar" src="/\${u.userPhoto.replace(/\\\\/g,'/')}" onerror="this.style.display='none'" alt="">`
         : `<div class="uc-avatar" style="display:flex;align-items:center;justify-content:center;font-size:1.2rem;font-weight:700;background:rgba(99,102,241,.15);color:var(--primary)">${(u.name||'U')[0].toUpperCase()}</div>`}
       <div class="uc-info">
         <div class="uc-name">${u.name||'—'}</div>
@@ -774,7 +774,7 @@ async function loadBookings() {
     const res      = await fetch(`${API}/admin/bookings`, { headers:{ Authorization:`Bearer ${adminToken}` }});
     const bookings = await res.json();
     const tbody    = document.getElementById("bookingsBody");
-    if (!bookings.length) { tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:30px;color:var(--muted)">No bookings yet</td></tr>`; return; }
+    if (!bookings.length) { tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:30px;color:var(--muted)">No bookings yet</td></tr>`; return; }
     tbody.innerHTML = bookings.map(b => {
       const tid    = b._id.slice(-8).toUpperCase();
       const uname  = b.userId?.name || "—";
@@ -784,6 +784,8 @@ async function loadBookings() {
       const bnum   = b.busId?.busNumber || "";
       const route  = b.busId ? `${b.busId.from} → ${b.busId.to}` : "—";
       const date   = new Date(b.createdAt).toLocaleDateString("en-IN");
+      const isFailed = b.status === "failed";
+      const statusBadge = isFailed ? '<span class="badge badge-red">Failed</span>' : '<span class="badge badge-green">Paid</span>';
       return `<tr>
         <td><span style="font-family:monospace;font-size:.8rem">#${tid}</span></td>
         <td><div style="font-weight:600">${uname}</div><div style="font-size:.75rem;color:var(--muted)">${uemail}</div></td>
@@ -791,7 +793,8 @@ async function loadBookings() {
         <td><div>${bname}</div>${bnum?`<div style="font-size:.72rem;color:var(--muted)">${bnum}</div>`:''}</td>
         <td style="font-size:.85rem">${route}</td>
         <td><span class="badge badge-blue">${b.seatsBooked} seat(s)</span></td>
-        <td style="font-weight:700;color:#a855f7">₹${b.totalPrice}</td>
+        <td style="font-weight:700;color:${isFailed ? 'var(--danger)' : '#a855f7'}">₹${b.totalPrice}</td>
+        <td>${statusBadge}</td>
         <td style="font-size:.8rem;color:var(--muted)">${date}</td>
       </tr>`;
     }).join("");

@@ -245,6 +245,16 @@
       </div>
     </div>
 
+    <!-- ══════════ PERMANENT BOARDING PASS QR CODE ══════════ -->
+    <div class="recharge-section" style="text-align: center; margin-bottom: 28px; padding: 24px;">
+      <div class="recharge-title" style="font-size: 1.15rem; font-weight: 800; margin-bottom: 4px; background: linear-gradient(135deg,#6366f1,#a855f7); -webkit-background-clip: text; -webkit-text-fill-color: transparent;"><i class="fas fa-id-card" style="margin-right:6px"></i>My Permanent Boarding Pass QR</div>
+      <div class="recharge-subtitle" style="font-size: .82rem; color: #64748b; margin-bottom: 16px;">Present this QR code to the conductor when boarding to deduct fare from your wallet.</div>
+      
+      <div style="background: #fff; padding: 12px; border-radius: 16px; display: inline-block; box-shadow: 0 4px 15px rgba(0,0,0,0.3); border: 2px solid rgba(99,102,241,0.2);">
+        <img id="walletProfileQrImage" src="https://cdn-icons-png.flaticon.com/512/149/149071.png" alt="Profile QR Code" style="width: 140px; height: 140px; display: block;">
+      </div>
+    </div>
+
     <!-- ══════════ RECHARGE SECTION ══════════ -->
     <div class="recharge-section">
       <div class="recharge-title"><i class="fas fa-bolt" style="margin-right:6px"></i>Quick Recharge</div>
@@ -313,7 +323,7 @@
     const WALLET_API = "/api";
     let selectedAmount = 500;
 
-    // ── Load wallet balance ──
+    // ── Load wallet balance & QR ──
     async function loadWalletBalance() {
       const token = localStorage.getItem("token");
       if (!token) {
@@ -322,15 +332,18 @@
         return;
       }
       try {
-        const res = await fetch(`${WALLET_API}/payment/wallet-balance`, {
+        const res = await fetch(`${WALLET_API}/auth/me`, {
           headers: { "Authorization": `Bearer ${token}` }
         });
-        const data = await res.json();
+        const user = await res.json();
         if (res.ok) {
-          document.getElementById("walletBalance").textContent = `₹${(data.balance || 0).toLocaleString('en-IN')}`;
+          document.getElementById("walletBalance").textContent = `₹${(user.balance || 0).toLocaleString('en-IN')}`;
+          if (user.profileQr) {
+            document.getElementById("walletProfileQrImage").src = user.profileQr;
+          }
         }
       } catch (e) {
-        console.error("Failed to fetch wallet balance:", e);
+        console.error("Failed to fetch wallet balance & QR:", e);
       }
     }
 

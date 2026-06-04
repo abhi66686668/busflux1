@@ -173,6 +173,12 @@ const userSchema =
         default: 0
       },
 
+      // CONDUCTOR EXPERIENCE (IN YEARS)
+      experience: {
+        type: Number,
+        default: 0
+      },
+
       // LAST UPI ID USED
       lastUpiIdUsed: {
         type: String,

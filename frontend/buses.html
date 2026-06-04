@@ -152,7 +152,7 @@
 
   <div class="container container-wide">
     <h1>Available <span>Buses</span></h1>
-    <p class="subtitle">Select a route and reserve your ticket</p>
+    <p class="subtitle">Search available routes and schedules</p>
 
     <div id="busList">
       <div style="text-align:center;padding:40px;color:var(--text-muted);">
@@ -163,86 +163,6 @@
   </div>
 
   <div id="toastContainer"></div>
-
-  <!-- ══════════ BOOKING MODAL ══════════ -->
-  <div class="bk-overlay" id="bookingModal">
-    <div class="bk-modal">
-      <button class="bk-close" onclick="closeBookingModal()"><i class="fas fa-xmark"></i></button>
-
-      <div class="bk-title"><i class="fas fa-ticket"></i> Book Your Ticket</div>
-      <div class="bk-subtitle" id="bkBusName">Select your boarding & dropping stops</div>
-
-      <!-- Full route display -->
-      <div class="bk-route-bar">
-        <span class="city" id="bkFrom">–</span>
-        <span class="arrow"><i class="fas fa-arrow-right"></i></span>
-        <span class="city" id="bkTo">–</span>
-      </div>
-
-      <!-- Boarding Point -->
-      <div class="bk-label"><i class="fas fa-map-pin" style="color:#10b981;margin-right:4px"></i>Boarding Point</div>
-      <select class="bk-select" id="bkBoarding" onchange="updatePrice()"></select>
-
-      <!-- Dropping Point -->
-      <div class="bk-label"><i class="fas fa-location-dot" style="color:#f43f5e;margin-right:4px"></i>Dropping Point</div>
-      <select class="bk-select" id="bkDropping" onchange="updatePrice()"></select>
-
-      <!-- Warning -->
-      <div class="warning-msg" id="bkWarning"><i class="fas fa-exclamation-triangle"></i> <span id="bkWarningText"></span></div>
-
-      <!-- Price Summary -->
-      <div class="price-card">
-        <div class="price-row">
-          <span>Age Group</span>
-          <span class="price-badge" id="bkAgeGroup"><i class="fas fa-user"></i> Loading...</span>
-        </div>
-        <div class="price-row">
-          <span>Price per seat</span>
-          <span id="bkPricePerSeat">₹–</span>
-        </div>
-
-        <div class="price-row total">
-          <span>Total Amount</span>
-          <span id="bkTotal">₹–</span>
-        </div>
-      </div>
-
-      <!-- Payment Method Selector -->
-      <div class="bk-label" style="margin-bottom:6px"><i class="fas fa-credit-card" style="color:#a855f7;margin-right:4px"></i>Payment Method</div>
-      <div style="display:flex;gap:10px;margin-bottom:20px">
-        <label style="flex:1;display:flex;align-items:center;gap:8px;padding:12px 14px;background:rgba(99,102,241,.08);border:2px solid rgba(99,102,241,.3);border-radius:10px;cursor:pointer;font-size:.85rem;font-weight:600;transition:all .2s">
-          <input type="radio" name="payMethod" value="razorpay" checked style="accent-color:#6366f1"> <i class="fas fa-credit-card"></i> Razorpay (UPI/Card/GPay)
-        </label>
-        <label style="flex:1;display:flex;align-items:center;gap:8px;padding:12px 14px;background:rgba(255,255,255,.03);border:2px solid rgba(255,255,255,.08);border-radius:10px;cursor:pointer;font-size:.85rem;font-weight:600;transition:all .2s">
-          <input type="radio" name="payMethod" value="wallet" style="accent-color:#10b981"> <i class="fas fa-wallet"></i> BusFlux Wallet
-        </label>
-      </div>
-
-      <button class="bk-btn" id="bkConfirmBtn" onclick="confirmBooking()">
-        <i class="fas fa-shield-halved"></i> Pay Securely
-      </button>
-    </div>
-  </div>
-
-  <!-- ══════════ TICKET SUCCESS MODAL ══════════ -->
-  <div class="bk-overlay" id="ticketSuccessModal">
-    <div class="bk-modal" style="text-align: center;">
-      <button class="bk-close" onclick="closeTicketModal()"><i class="fas fa-xmark"></i></button>
-      <div class="bk-title" style="color:#10b981; margin-bottom: 8px;"><i class="fas fa-check-circle"></i> Booking Successful!</div>
-      <div class="bk-subtitle" style="margin-bottom: 20px;">Please present this QR to the conductor</div>
-      
-      <div style="background:#fff; padding:20px; border-radius:16px; display:inline-block; margin-bottom:20px; border: 2px solid rgba(16,185,129,.2);">
-        <img id="ticketQR" src="" alt="Ticket QR Code" style="width:200px; height:200px; display:block;">
-      </div>
-      
-      <div style="font-size: 1.1rem; font-weight: 800; margin-bottom: 6px; color: #f1f5f9;">Ticket ID: <span id="ticketIdDisplay" style="color:#a855f7;"></span></div>
-      <div style="color: #94a3b8; font-size: 0.95rem; font-weight: 500;" id="ticketRouteDisplay"></div>
-      
-      <button class="bk-btn" style="margin-top:24px; background: linear-gradient(135deg, #10b981, #059669);" onclick="closeTicketModal()">
-        <i class="fas fa-check"></i> Done
-      </button>
-    </div>
-  </div>
 
   <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
   <script src="script.js?v=6"></script>

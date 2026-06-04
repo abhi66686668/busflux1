@@ -789,31 +789,43 @@ router.get("/me", auth, async (req, res) => {
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
-    return res.status(200).json(user);
+    
+    // Generate permanent profile QR code (based on email)
+    const qrcode = require("qrcode");
+    const qrDataUrl = await qrcode.toDataURL(user.email);
+    
+    const userObj = user.toObject();
+    userObj.profileQr = qrDataUrl;
+
+    return res.status(200).json(userObj);
   } catch (error) {
     return res.status(500).json({ message: error.message });
   }
 });
+
 
 // ================= UPDATE PROFILE (/me) =================
 router.put("/me", auth, upload.fields([{ name: "userPhoto", maxCount: 1 }]), async (req, res) => {
   try {
     console.log("PUT /me headers:", req.headers["content-type"]);
     console.log("PUT /me body:", req.body);
-    const { name, phone, age } = req.body || {};
+    const { name, phone, age, experience } = req.body || {};
     const user = await User.findById(req.user.id);
     if (!user) return res.status(404).json({ message: "User not found" });
 
-    if (name) user.name = name;
-    if (phone) user.phone = phone;
-    if (age) {
-      user.age = age;
-      if(age >= 5 && age <= 14) user.ageGroup = "Children";
-      else if(age >= 15 && age <= 24) user.ageGroup = "Youth";
-      else if(age >= 25 && age <= 44) user.ageGroup = "Young Adults";
-      else if(age >= 45 && age <= 59) user.ageGroup = "Middle Age";
-      else if(age >= 60 && age <= 74) user.ageGroup = "Elderly";
+    if (name !== undefined) user.name = name;
+    if (phone !== undefined) user.phone = phone;
+    if (age !== undefined) {
+      user.age = Number(age) || 0;
+      if(user.age >= 5 && user.age <= 14) user.ageGroup = "Children";
+      else if(user.age >= 15 && user.age <= 24) user.ageGroup = "Youth";
+      else if(user.age >= 25 && user.age <= 44) user.ageGroup = "Young Adults";
+      else if(user.age >= 45 && user.age <= 59) user.ageGroup = "Middle Age";
+      else if(user.age >= 60 && user.age <= 74) user.ageGroup = "Elderly";
       else user.ageGroup = "Seniors";
+    }
+    if (experience !== undefined) {
+      user.experience = Number(experience) || 0;
     }
 
     if (req.files && req.files.userPhoto) {
