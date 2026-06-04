@@ -524,8 +524,8 @@ router.post(
 
 
 
-      // LOGIN EMAIL
-      await transporter.sendMail({
+      // LOGIN EMAIL (asynchronous, non-blocking)
+      transporter.sendMail({
 
         from:
           process.env.EMAIL_USER,
@@ -542,7 +542,7 @@ router.post(
 
 You have successfully logged into BusFlux 🚍`
 
-      });
+      }).catch(err => console.error("Login email alert failed to send:", err.message));
 
 
 
