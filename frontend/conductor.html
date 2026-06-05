@@ -1340,10 +1340,11 @@
       setTimeout(() => {
         closeCameraScanner();
         
+        const cleanText = decodedText.trim();
         if (scannerTargetType === "passenger") {
-          processPassDeduction(decodedText);
+          processPassDeduction(cleanText);
         } else if (scannerTargetType === "ticket") {
-          processTicketScan(decodedText);
+          processTicketScan(cleanText);
         }
       }, 500);
     }
@@ -1523,7 +1524,7 @@
 
       try {
         const decodedText = await html5QrCode.scanFile(file, false);
-        processPassDeduction(decodedText);
+        processPassDeduction(decodedText.trim());
       } catch (err) {
         console.error(err);
         resArea.innerHTML = `
@@ -1566,7 +1567,18 @@
       const droppingPoint = document.getElementById("droppingSelect").value;
 
       if (!busId || !boardingPoint || !droppingPoint) {
-        alert("Select route stops first.");
+        const rArea = document.getElementById("billingResultArea");
+        if (rArea) {
+          rArea.innerHTML = `
+            <div style="animation: fadeUp 0.4s ease; text-align: center; width: 100%;">
+              <i class="fas fa-exclamation-triangle" style="font-size: 3.5rem; color: var(--warning); margin-bottom: 15px;"></i>
+              <div style="font-weight:800; color: var(--warning); font-size: 1.1rem; margin-bottom: 12px; letter-spacing: 0.5px;">ROUTE SELECTION REQUIRED</div>
+              <div style="font-size: 0.88rem; color: var(--text-main); font-weight: 600; margin-bottom: 8px;">Please select Bus and Route Stops first.</div>
+              <div style="font-size: 0.78rem; color: var(--text-muted); line-height: 1.4;">We need the boarding and dropping points to calculate the correct fare.</div>
+            </div>
+          `;
+        }
+        alert("Please select Bus and Route Stops first.");
         return;
       }
 
@@ -2418,7 +2430,7 @@
 
       try {
         const decodedText = await html5QrCode.scanFile(file, false);
-        processTicketScan(decodedText);
+        processTicketScan(decodedText.trim());
       } catch (err) {
         console.error(err);
         resArea.innerHTML = `

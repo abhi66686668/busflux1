@@ -39,11 +39,45 @@ router.post("/scan", auth, async (req, res) => {
     const { ticketId } = req.body;
     if (!ticketId) return res.status(400).json({ message: "Ticket ID is required" });
 
-    // Finds booking by looking at _id ending with ticketId
+    let queryStr = ticketId.toString().trim();
+
+    // 1. Try parsing JSON if input is wrapped in JSON format
+    try {
+      const parsed = JSON.parse(queryStr);
+      if (parsed.ticketId) {
+        queryStr = parsed.ticketId.trim();
+      } else if (parsed.bookingId) {
+        queryStr = parsed.bookingId.trim();
+      } else if (parsed.id) {
+        queryStr = parsed.id.trim();
+      }
+    } catch (e) {
+      // Not JSON, continue
+    }
+
+    // 2. Extract ticket ID from URLs if passenger scanned a URL QR code
+    try {
+      if (queryStr.toLowerCase().includes("http://") || queryStr.toLowerCase().includes("https://")) {
+        const urlObj = new URL(queryStr);
+        const urlParam = urlObj.searchParams.get("ticketId") || urlObj.searchParams.get("bookingId") || urlObj.searchParams.get("id");
+        if (urlParam) {
+          queryStr = urlParam.trim();
+        }
+      }
+    } catch (e) {
+      // Ignore URL errors
+    }
+
+    // Finds booking
     const bookings = await Booking.find()
       .populate("userId", "name email phone userPhoto")
       .populate("busId", "busName from to");
-    const booking = bookings.find(b => b._id.toString().toUpperCase().endsWith(ticketId.toUpperCase()));
+      
+    const booking = bookings.find(b => {
+      const bIdStr = b._id.toString().toUpperCase();
+      const qStr = queryStr.toUpperCase();
+      return bIdStr === qStr || bIdStr.endsWith(qStr);
+    });
 
     if (!booking) {
       return res.status(404).json({ message: "Booking not found" });
