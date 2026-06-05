@@ -536,6 +536,43 @@
       transform: none !important;
       opacity: 0.6;
     }
+    
+    /* Camera scanner styling */
+    @keyframes scanLineAnim {
+      0% { top: 0%; }
+      50% { top: 100%; }
+      100% { top: 0%; }
+    }
+    #cameraScannerModal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 10000;
+      background: rgba(15, 23, 42, 0.75);
+      backdrop-filter: blur(12px);
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+    #cameraScannerModal .modal-content {
+      background: var(--bg-card);
+      border-radius: var(--radius);
+      border: 1px solid var(--border-color);
+      width: 90%;
+      max-width: 480px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+      transform: scale(0.9);
+      transition: transform 0.3s ease;
+      position: relative;
+    }
   </style>
 </head>
 <body>
@@ -780,11 +817,16 @@
               </div>
 
               <div style="border-top: 1px dashed var(--border-color); padding-top: 20px; margin-top: 10px;">
-                <div class="form-group">
-                  <label>Scan/Upload QR Code</label>
-                  <button class="btn-action" onclick="document.getElementById('qrFileInput').click()" style="background: linear-gradient(135deg, #3c50e0, #80caee); margin-bottom: 20px;">
-                    <i class="fas fa-qrcode"></i> Upload Profile QR Image
-                  </button>
+                <div class="form-group" style="margin-bottom: 20px;">
+                  <label>Scan / Upload QR Code</label>
+                  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 6px;">
+                    <button class="btn-action" onclick="startCameraScanner('passenger')" style="background: linear-gradient(135deg, var(--primary), #80caee);">
+                      <i class="fas fa-camera"></i> Live Camera Scan
+                    </button>
+                    <button class="btn-action" onclick="document.getElementById('qrFileInput').click()" style="background: var(--bg-body); border: 1px solid var(--border-color); color: var(--text-main);">
+                      <i class="fas fa-upload"></i> Upload Image
+                    </button>
+                  </div>
                   <input type="file" id="qrFileInput" accept="image/*" style="display:none;" onchange="handleFileUpload(event)">
                 </div>
 
@@ -821,10 +863,15 @@
           <div class="billing-grid">
             <div>
               <div class="form-group" style="margin-bottom: 30px;">
-                <label>Scan/Upload Ticket QR</label>
-                <button class="btn-action" onclick="document.getElementById('ticketQrFileInput').click()" style="background: linear-gradient(135deg, #10b981, #059669); margin-bottom: 20px;">
-                  <i class="fas fa-qrcode"></i> Upload Ticket QR Image
-                </button>
+                <label>Scan / Upload Ticket QR</label>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 6px; margin-bottom: 20px;">
+                  <button class="btn-action" onclick="startCameraScanner('ticket')" style="background: linear-gradient(135deg, #10b981, #059669);">
+                    <i class="fas fa-camera"></i> Live Camera Scan
+                  </button>
+                  <button class="btn-action" onclick="document.getElementById('ticketQrFileInput').click()" style="background: var(--bg-body); border: 1px solid var(--border-color); color: var(--text-main);">
+                    <i class="fas fa-upload"></i> Upload Image
+                  </button>
+                </div>
                 <input type="file" id="ticketQrFileInput" accept="image/*" style="display:none;" onchange="handleTicketFileUpload(event)">
               </div>
 
@@ -1025,6 +1072,51 @@
 
   <div id="hiddenReader" style="display:none;"></div>
 
+  <!-- ── CAMERA SCANNER MODAL ── -->
+  <div id="cameraScannerModal">
+    <div class="modal-content">
+      
+      <!-- Modal Header -->
+      <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 12px;">
+        <h3 style="font-size: 1.1rem; font-weight: 700; color: var(--text-main); margin: 0; display: flex; align-items: center; gap: 8px;">
+          <i class="fas fa-camera" style="color: var(--primary);"></i> Live QR Code Scanner
+        </h3>
+        <button onclick="closeCameraScanner()" style="background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 1.2rem; transition: color 0.2s;" onmouseover="this.style.color='var(--danger)'" onmouseout="this.style.color='var(--text-muted)'">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      <!-- Camera Selection Dropdown -->
+      <div class="form-group" style="margin: 0;">
+        <label style="font-weight: 600; margin-bottom: 6px; display: block; font-size: 0.8rem; color: var(--text-muted);">Select Camera Source</label>
+        <select id="cameraSourceSelect" onchange="changeCameraSource()" style="width: 100%; padding: 10px 14px; border-radius: var(--radius); border: 1px solid var(--border-color); background: var(--bg-body); color: var(--text-main); outline: none;"></select>
+      </div>
+
+      <!-- Scanner Display Viewport -->
+      <div style="position: relative; width: 100%; aspect-ratio: 4/3; background: #000; border-radius: var(--radius); overflow: hidden; border: 2px solid var(--border-color); box-shadow: inset 0 0 20px rgba(0,0,0,0.6);">
+        <!-- Active stream -->
+        <div id="cameraScannerPreview" style="width: 100%; height: 100%;"></div>
+        
+        <!-- Glowing green target frame -->
+        <div style="position: absolute; top: 15%; left: 15%; width: 70%; height: 70%; border: 2px dashed rgba(16, 185, 129, 0.6); box-shadow: 0 0 15px rgba(16, 185, 129, 0.2); border-radius: 8px; pointer-events: none;">
+          <!-- Laser animation -->
+          <div style="position: absolute; width: 100%; height: 2px; background: linear-gradient(90deg, transparent, #10b981, transparent); box-shadow: 0 0 8px #10b981; animation: scanLineAnim 2s linear infinite;"></div>
+        </div>
+      </div>
+
+      <!-- Status Indicator / Feedback -->
+      <div id="cameraScannerStatus" style="text-align: center; font-size: 0.85rem; font-weight: 600; color: var(--text-muted);">
+        Detecting cameras...
+      </div>
+
+      <!-- Actions -->
+      <button class="btn-action" onclick="closeCameraScanner()" style="background: linear-gradient(135deg, var(--danger), #ff6b8b); font-weight: 700; margin: 0;">
+        <i class="fas fa-video-slash"></i> Stop Scanning
+      </button>
+
+    </div>
+  </div>
+
   <script>
     const API = "/api";
     const token = localStorage.getItem("token");
@@ -1037,6 +1129,10 @@
     let barSalesChart = null;
     let targetGaugeChart = null;
     let areaTripChart = null;
+
+    // Camera scanner state
+    let activeScanner = null;
+    let scannerTargetType = "";
 
     // Theme state
     if (localStorage.getItem("theme") === "dark") {
@@ -1103,6 +1199,9 @@
 
     // Tab switcher
     function switchTab(tabId, el) {
+      // Gracefully stop active camera scanner when switching tabs
+      closeCameraScanner();
+
       document.querySelectorAll(".dashboard-page").forEach(p => p.classList.remove("active"));
       document.querySelectorAll(".menu-link").forEach(l => l.classList.remove("active"));
       
@@ -1128,6 +1227,142 @@
       
       // Close sidebar on mobile after clicking
       document.getElementById("sidebar").classList.remove("open");
+    }
+
+    // --- LIVE CAMERA QR CODE SCANNER UTILITIES ---
+    function startCameraScanner(targetType) {
+      scannerTargetType = targetType;
+      
+      const modal = document.getElementById("cameraScannerModal");
+      modal.style.display = "flex";
+      // Clear status
+      document.getElementById("cameraScannerStatus").innerHTML = `<i class="fas fa-spinner fa-spin"></i> Initializing camera...`;
+      
+      setTimeout(() => {
+        modal.style.opacity = "1";
+      }, 10);
+
+      // Enumerating cameras
+      Html5Qrcode.getCameras().then(devices => {
+        const select = document.getElementById("cameraSourceSelect");
+        select.innerHTML = "";
+        
+        if (devices && devices.length > 0) {
+          let preferredCameraId = null;
+          
+          devices.forEach((device, index) => {
+            const option = document.createElement("option");
+            option.value = device.id;
+            option.text = device.label || `Camera ${index + 1}`;
+            select.appendChild(option);
+            
+            // Check for rear-facing cameras
+            const labelLower = (device.label || "").toLowerCase();
+            if (labelLower.includes("back") || labelLower.includes("rear") || labelLower.includes("environment")) {
+              preferredCameraId = device.id;
+            }
+          });
+          
+          const activeCameraId = preferredCameraId || devices[0].id;
+          select.value = activeCameraId;
+          
+          startScanning(activeCameraId);
+        } else {
+          document.getElementById("cameraScannerStatus").innerText = "No cameras detected on this device.";
+        }
+      }).catch(err => {
+        console.error("Camera access failed:", err);
+        document.getElementById("cameraScannerStatus").innerHTML = `<span style="color: var(--danger);"><i class="fas fa-exclamation-triangle"></i> Permission Denied or Access Failed</span>`;
+      });
+    }
+
+    async function startScanning(cameraId) {
+      try {
+        if (activeScanner) {
+          await activeScanner.stop().catch(() => {});
+        }
+        
+        activeScanner = new Html5Qrcode("cameraScannerPreview");
+        
+        const config = {
+          fps: 15,
+          qrbox: function(width, height) {
+            const size = Math.min(width, height) * 0.7;
+            return { width: size, height: size };
+          }
+        };
+
+        await activeScanner.start(
+          cameraId,
+          config,
+          (decodedText) => {
+            handleScannerSuccess(decodedText);
+          },
+          (errorMessage) => {
+            // Frame parse warning, ignore
+          }
+        );
+        
+        document.getElementById("cameraScannerStatus").innerText = "Point your camera at a QR code";
+      } catch (err) {
+        console.error("Error starting camera stream:", err);
+        document.getElementById("cameraScannerStatus").innerHTML = `<span style="color: var(--danger);"><i class="fas fa-exclamation-triangle"></i> Failed to open camera stream</span>`;
+      }
+    }
+
+    function changeCameraSource() {
+      const select = document.getElementById("cameraSourceSelect");
+      if (select.value) {
+        startScanning(select.value);
+      }
+    }
+
+    function handleScannerSuccess(decodedText) {
+      document.getElementById("cameraScannerStatus").innerHTML = `<span style="color: var(--success); font-weight: 700;"><i class="fas fa-check-circle"></i> QR Code Detected!</span>`;
+      
+      // Play a short high-pitch confirmation beep using Web Audio API
+      try {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const oscillator = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+        oscillator.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+        oscillator.type = "sine";
+        oscillator.frequency.setValueAtTime(1000, audioCtx.currentTime);
+        gainNode.gain.setValueAtTime(0.08, audioCtx.currentTime);
+        oscillator.start();
+        oscillator.stop(audioCtx.currentTime + 0.12);
+      } catch (e) {
+        // Fallback if audio context block or unsupported
+      }
+
+      // Briefly wait to let the success feedback render, then stop stream and trigger processing
+      setTimeout(() => {
+        closeCameraScanner();
+        
+        if (scannerTargetType === "passenger") {
+          processPassDeduction(decodedText);
+        } else if (scannerTargetType === "ticket") {
+          processTicketScan(decodedText);
+        }
+      }, 500);
+    }
+
+    function closeCameraScanner() {
+      const modal = document.getElementById("cameraScannerModal");
+      modal.style.opacity = "0";
+      setTimeout(() => {
+        modal.style.display = "none";
+      }, 300);
+      
+      if (activeScanner) {
+        activeScanner.stop().then(() => {
+          activeScanner = null;
+        }).catch(err => {
+          console.error("Error stopping scanner stream:", err);
+          activeScanner = null;
+        });
+      }
     }
 
     // Load buses
