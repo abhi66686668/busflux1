@@ -1097,8 +1097,8 @@
         <!-- Active stream -->
         <div id="cameraScannerPreview" style="width: 100%; height: 100%;"></div>
         
-        <!-- Glowing green target frame -->
-        <div style="position: absolute; top: 15%; left: 15%; width: 70%; height: 70%; border: 2px dashed rgba(16, 185, 129, 0.6); box-shadow: 0 0 15px rgba(16, 185, 129, 0.2); border-radius: 8px; pointer-events: none;">
+        <!-- Solid white square target frame -->
+        <div style="position: absolute; top: 50%; left: 50%; width: 220px; height: 220px; transform: translate(-50%, -50%); border: 3px solid #ffffff; box-shadow: 0 0 0 9999px rgba(15, 23, 42, 0.55), 0 0 15px rgba(255,255,255,0.25); border-radius: 12px; pointer-events: none; z-index: 100;">
           <!-- Laser animation -->
           <div style="position: absolute; width: 100%; height: 2px; background: linear-gradient(90deg, transparent, #10b981, transparent); box-shadow: 0 0 8px #10b981; animation: scanLineAnim 2s linear infinite;"></div>
         </div>
@@ -1285,11 +1285,7 @@
         activeScanner = new Html5Qrcode("cameraScannerPreview");
         
         const config = {
-          fps: 15,
-          qrbox: function(width, height) {
-            const size = Math.min(width, height) * 0.7;
-            return { width: size, height: size };
-          }
+          fps: 15
         };
 
         await activeScanner.start(
