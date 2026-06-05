@@ -592,54 +592,11 @@
       </div>
       <div class="step-connector" id="conn1"></div>
       <div class="step-item" id="step2Indicator">
-        <div class="step-circle"><i class="fas fa-envelope"></i></div>
-        <span class="step-label">Verify</span>
-      </div>
-      <div class="step-connector" id="conn2"></div>
-      <div class="step-item" id="step3Indicator">
         <div class="step-circle"><i class="fas fa-image"></i></div>
         <span class="step-label">Uploads</span>
       </div>
-</head>
-
-<body class="fade-in">
-
-  <!-- HEADER -->
-  <header class="main-header">
-    <div class="nav-container">
-      <a href="index.html" class="logo">
-        <i class="fas fa-bus-alt"></i> BusFlux
-      </a>
-      <ul id="navLinks" class="nav-links"></ul>
-    </div>
-  </header>
-
-  <div class="register-wrapper">
-
-    <!-- Hero -->
-    <div class="reg-hero">
-      <h1><span>BusFlux</span> Registration</h1>
-      <p>Create your account for seamless ticket booking</p>
-    </div>
-
-    <!-- Progress Steps -->
-    <div class="steps-bar">
-      <div class="step-item active" id="step1Indicator">
-        <div class="step-circle"><i class="fas fa-user"></i></div>
-        <span class="step-label">Details</span>
-      </div>
-      <div class="step-connector" id="conn1"></div>
-      <div class="step-item" id="step2Indicator">
-        <div class="step-circle"><i class="fas fa-envelope"></i></div>
-        <span class="step-label">Verify</span>
-      </div>
       <div class="step-connector" id="conn2"></div>
       <div class="step-item" id="step3Indicator">
-        <div class="step-circle"><i class="fas fa-image"></i></div>
-        <span class="step-label">Uploads</span>
-      </div>
-      <div class="step-connector" id="conn3"></div>
-      <div class="step-item" id="step4Indicator">
         <div class="step-circle"><i class="fas fa-lock"></i></div>
         <span class="step-label">Password</span>
       </div>
@@ -649,13 +606,13 @@
     <div class="reg-card">
       <form id="registerForm" novalidate>
 
-        <!-- ── SECTION 1: Personal Info ── -->
+        <!-- ── SECTION 1: Personal Info & Email ── -->
         <div class="step-section active" id="step1Section">
           <div class="section-header">
             <div class="section-icon"><i class="fas fa-user"></i></div>
             <div>
               <h2>Personal Information</h2>
-              <p>Your basic identity details</p>
+              <p>Your basic identity and email details</p>
             </div>
           </div>
 
@@ -666,6 +623,15 @@
               <div class="input-wrapper">
                 <input type="text" id="name" placeholder="Enter your full name" required autocomplete="name">
                 <i class="fas fa-user"></i>
+              </div>
+            </div>
+
+            <!-- Email -->
+            <div class="form-group full">
+              <label class="form-label">Email Address</label>
+              <div class="input-wrapper">
+                <input type="email" id="email" placeholder="you@example.com" required autocomplete="email">
+                <i class="fas fa-envelope"></i>
               </div>
             </div>
 
@@ -708,66 +674,13 @@
 
           <div class="step-actions">
             <button type="button" onclick="goToStep(2)" style="width: 100%; display: flex; justify-content: center; align-items: center; gap: 8px;">
-              Continue to Verification <i class="fas fa-arrow-right"></i>
+              Continue to Document Uploads <i class="fas fa-arrow-right"></i>
             </button>
           </div>
         </div>
 
-        <!-- ── SECTION 2: Email & OTP ── -->
+        <!-- ── SECTION 2: Photo Uploads ── -->
         <div class="step-section" id="step2Section">
-          <div class="section-header">
-            <div class="section-icon"><i class="fas fa-envelope"></i></div>
-            <div>
-              <h2>Email Verification</h2>
-              <p>We'll send a one-time password to verify</p>
-            </div>
-          </div>
-
-          <!-- Email + Send OTP inline -->
-          <div class="email-row">
-            <div class="form-group">
-              <label class="form-label">Email Address</label>
-              <div class="input-wrapper">
-                <input type="email" id="email" placeholder="you@example.com" required autocomplete="email">
-                <i class="fas fa-envelope"></i>
-              </div>
-            </div>
-            <button type="button" class="otp-send-btn" onclick="sendOtpUI()">
-              <i class="fas fa-paper-plane"></i> Send OTP
-            </button>
-          </div>
-
-          <!-- OTP input (hidden until email sent) -->
-          <div class="otp-box" id="otpSection">
-            <div class="otp-row">
-              <div class="form-group">
-                <label class="form-label">Enter OTP</label>
-                <div class="input-wrapper">
-                  <input type="text" id="otp" placeholder="6-digit code" maxlength="6">
-                  <i class="fas fa-shield-alt"></i>
-                </div>
-              </div>
-              <button type="button" class="otp-verify-btn" onclick="verifyOtpUI()">
-                <i class="fas fa-check-circle"></i> Verify
-              </button>
-            </div>
-            <div class="otp-verified-badge" id="otpVerifiedBadge">
-              <i class="fas fa-check-circle"></i> Email verified successfully!
-            </div>
-          </div>
-
-          <div class="step-actions" style="display: flex; gap: 12px;">
-            <button type="button" class="btn-secondary" onclick="goToStep(1)" style="flex: 1; display: flex; justify-content: center; align-items: center; gap: 6px;">
-              <i class="fas fa-arrow-left"></i> Back
-            </button>
-            <button type="button" id="verifyNextBtn" onclick="goToStep(3)" style="flex: 1; display: flex; justify-content: center; align-items: center; gap: 6px;" disabled>
-              Continue <i class="fas fa-arrow-right"></i>
-            </button>
-          </div>
-        </div>
-
-        <!-- ── SECTION 3: Photo Uploads ── -->
-        <div class="step-section" id="step3Section">
           <div class="section-header">
             <div class="section-icon"><i class="fas fa-camera"></i></div>
             <div>
@@ -805,17 +718,17 @@
           </div>
 
           <div class="step-actions" style="display: flex; gap: 12px;">
-            <button type="button" class="btn-secondary" onclick="goToStep(2)" style="flex: 1; display: flex; justify-content: center; align-items: center; gap: 6px;">
+            <button type="button" class="btn-secondary" onclick="goToStep(1)" style="flex: 1; display: flex; justify-content: center; align-items: center; gap: 6px;">
               <i class="fas fa-arrow-left"></i> Back
             </button>
-            <button type="button" id="uploadNextBtn" onclick="goToStep(4)" style="flex: 1; display: flex; justify-content: center; align-items: center; gap: 6px;" disabled>
-              Continue <i class="fas fa-arrow-right"></i>
+            <button type="button" id="uploadNextBtn" onclick="goToStep(3)" style="flex: 1; display: flex; justify-content: center; align-items: center; gap: 6px;" disabled>
+              Continue to Password <i class="fas fa-arrow-right"></i>
             </button>
           </div>
         </div>
 
-        <!-- ── SECTION 4: Password ── -->
-        <div class="step-section" id="step4Section">
+        <!-- ── SECTION 3: Set Password ── -->
+        <div class="step-section" id="step3Section">
           <div class="section-header">
             <div class="section-icon"><i class="fas fa-lock"></i></div>
             <div>
@@ -835,7 +748,7 @@
           </div>
 
           <div class="step-actions" style="display: flex; gap: 12px;">
-            <button type="button" class="btn-secondary" onclick="goToStep(3)" style="flex: 1; display: flex; justify-content: center; align-items: center; gap: 6px;">
+            <button type="button" class="btn-secondary" onclick="goToStep(2)" style="flex: 1; display: flex; justify-content: center; align-items: center; gap: 6px;">
               <i class="fas fa-arrow-left"></i> Back
             </button>
             <button type="submit" class="submit-btn" id="registerSubmitBtn" style="margin-top: 0; flex: 2; display: flex; justify-content: center; align-items: center; gap: 8px;">
@@ -865,22 +778,17 @@
       if (step > currentStep) {
         if (currentStep === 1) {
           const name = document.getElementById("name").value.trim();
+          const email = document.getElementById("email").value.trim();
           const phone = document.getElementById("phone").value.trim();
           const age = document.getElementById("age").value.trim();
           const aadhaar = document.getElementById("aadhaarNumber").value.trim();
           
-          if (!name || !phone || !age || !aadhaar) {
+          if (!name || !email || !phone || !age || !aadhaar) {
             showToast("Please fill in all required fields first.", "warning");
             return;
           }
         }
         if (currentStep === 2) {
-          if (!isOtpVerified) {
-            showToast("Please verify your email with OTP first.", "warning");
-            return;
-          }
-        }
-        if (currentStep === 3) {
           const p = document.getElementById('userPhoto').files[0];
           const i = document.getElementById('idCardPhoto').files[0];
           if (!p || !i) {
@@ -896,7 +804,7 @@
       });
 
       // Update indicator bar active/done states
-      for (let i = 1; i <= 4; i++) {
+      for (let i = 1; i <= 3; i++) {
         const indicator = document.getElementById(`step${i}Indicator`);
         const conn = document.getElementById(`conn${i}`);
         
@@ -923,23 +831,6 @@
       const card = document.querySelector('.reg-card');
       if (card) {
         card.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
-    }
-
-    // ── OTP UI wrappers ──
-    async function sendOtpUI() {
-      await sendOtp();
-      const box = document.getElementById('otpSection');
-      if (box) box.classList.add('visible');
-    }
-
-    async function verifyOtpUI() {
-      await verifyOtp();
-      if (isOtpVerified) {
-        document.getElementById('email').classList.add('verified');
-        document.getElementById('otpVerifiedBadge').classList.add('visible');
-        document.getElementById('verifyNextBtn').disabled = false;
-        goToStep(3);
       }
     }
 

@@ -265,37 +265,18 @@ router.post(
     } = req.body;
 
 
-      const user =
-        await User.findOne({
+      let user = await User.findOne({ email });
 
-          email
-
-        });
-
-
-
-      if(!user){
-
+      if (user && user.password) {
         return res.status(400).json({
-
-          message:
-            "Please send OTP first"
-
+          message: "Email already registered"
         });
-
       }
 
-
-
-      if(!user.isVerified){
-
-        return res.status(400).json({
-
-          message:
-            "Please verify OTP first"
-
-        });
-
+      if (!user) {
+        user = new User({ email, isVerified: true });
+      } else {
+        user.isVerified = true;
       }
 
 

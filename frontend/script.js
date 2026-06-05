@@ -152,16 +152,7 @@ if(registerForm){
 
       e.preventDefault();
 
-      if(!isOtpVerified){
 
-        showToast(
-          "Please verify OTP first",
-          "warning"
-        );
-
-        return;
-
-      }
 
       const submitBtn =
         registerForm.querySelector(
