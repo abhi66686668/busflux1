@@ -950,6 +950,15 @@
                 <div style="border-left: 1px solid var(--border-color); padding-left: 16px;">Revenue: <span id="histSummaryRevenue" style="color: var(--success);">₹0</span></div>
               </div>
 
+              <!-- Search query input -->
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <label for="historySearchInput" style="font-size: 0.78rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Search:</label>
+                <div style="position: relative; display: flex; align-items: center;">
+                  <input type="text" id="historySearchInput" placeholder="Name, email, ID..." oninput="applyHistoryFilters()" style="width: 170px; padding: 6px 12px 6px 30px; font-size: 0.88rem; border-radius: var(--radius); border: 1px solid var(--border-color); background: var(--bg-card); color: var(--text-main); outline: none;">
+                  <i class="fas fa-search" style="position: absolute; left: 10px; color: var(--text-muted); font-size: 0.8rem; pointer-events: none;"></i>
+                </div>
+              </div>
+
               <!-- Status filter dropdown -->
               <div style="display: flex; align-items: center; gap: 8px;">
                 <label for="historyStatusFilter" style="font-size: 0.78rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Status:</label>
@@ -2167,8 +2176,30 @@
     function applyHistoryFilters() {
       const dateVal = document.getElementById("historyDateFilter").value;
       const statusVal = document.getElementById("historyStatusFilter").value;
+      const searchVal = document.getElementById("historySearchInput").value.trim().toLowerCase();
       
       const filtered = allHistoryLogs.filter(b => {
+        // Search query match
+        if (searchVal) {
+          const uname = (b.userId?.name || "").toLowerCase();
+          const uemail = (b.userId?.email || "").toLowerCase();
+          const busName = (b.busId?.busName || "").toLowerCase();
+          const routeFrom = (b.busId?.from || "").toLowerCase();
+          const routeTo = (b.busId?.to || "").toLowerCase();
+          const ticketId = b._id ? b._id.toLowerCase() : "";
+          const ticketIdShort = b._id ? b._id.slice(-8).toLowerCase() : "";
+          
+          const matchSearch = uname.includes(searchVal) ||
+                              uemail.includes(searchVal) ||
+                              busName.includes(searchVal) ||
+                              routeFrom.includes(searchVal) ||
+                              routeTo.includes(searchVal) ||
+                              ticketId.includes(searchVal) ||
+                              ticketIdShort.includes(searchVal);
+                              
+          if (!matchSearch) return false;
+        }
+
         // Date match
         if (dateVal) {
           const rawDate = b.scannedAt || b.createdAt;
@@ -2197,6 +2228,7 @@
     function clearHistoryFilters() {
       document.getElementById("historyDateFilter").value = "";
       document.getElementById("historyStatusFilter").value = "all";
+      document.getElementById("historySearchInput").value = "";
       renderHistoryTable(allHistoryLogs);
     }
 
