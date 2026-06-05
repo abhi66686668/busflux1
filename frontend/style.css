@@ -1238,3 +1238,79 @@ button:active {
   backdrop-filter: blur(10px);
 }
 .payment-processing i { font-size: 3.5rem; color: #6366f1; }
+
+/* ================= RESPONSIVE ENHANCEMENTS (MOBILE & LAPTOP) ================= */
+
+/* 1. Navigation Header & Layout (Mobile) */
+@media (max-width: 600px) {
+  .main-header {
+    padding: 0.8rem 1rem !important;
+    margin-bottom: 1rem !important;
+  }
+  .nav-container {
+    flex-direction: column !important;
+    gap: 10px !important;
+    align-items: center !important;
+  }
+  .nav-links {
+    width: 100% !important;
+    justify-content: center !important;
+    gap: 8px !important;
+    padding: 0 !important;
+  }
+  .nav-links a {
+    font-size: 0.8rem !important;
+    padding: 4px 8px !important;
+  }
+  .logo {
+    font-size: 1.35rem !important;
+  }
+  h1 {
+    font-size: 2rem !important;
+  }
+  .subtitle {
+    font-size: 0.88rem !important;
+    margin-bottom: 20px !important;
+  }
+}
+
+/* 2. Compact Forms (Mobile padding reduction) */
+@media (max-width: 480px) {
+  .auth-box {
+    padding: 24px 16px !important;
+  }
+  .profile-container {
+    padding: 20px 14px !important;
+    margin: 20px auto !important;
+  }
+  .wallet-panel {
+    padding: 18px 12px !important;
+  }
+}
+
+/* 3. Ticket Grid Layout (Laptop vs. Mobile) */
+@media (min-width: 768px) {
+  .ticket-grid {
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 20px !important;
+  }
+}
+
+/* 4. Bus Search Cards Grid (Laptop vs. Mobile) */
+@media (min-width: 768px) {
+  #busList {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 24px !important;
+  }
+}
+
+/* 5. Booking Modal Responsiveness */
+@media (max-width: 480px) {
+  .bk-modal {
+    padding: 24px 16px !important;
+  }
+  .bk-row {
+    grid-template-columns: 1fr !important;
+    gap: 0 !important;
+  }
+}
