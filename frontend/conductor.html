@@ -381,12 +381,17 @@
       header { padding: 0 20px; }
       .content-container { padding: 20px; }
       .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      .search-mock { display: none !important; }
+    }
+
+    @media (max-width: 768px) {
+      .user-profile-menu .info { display: none !important; }
+      .user-profile-menu { padding-left: 10px; }
+      .header-right { gap: 14px; }
     }
 
     @media (max-width: 640px) {
       .stats-grid { grid-template-columns: 1fr; }
-      .header-right .search-mock { display: none; }
-      .user-profile-menu .info { display: none; }
     }
 
     @media (max-width: 576px) {
