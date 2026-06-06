@@ -3,6 +3,7 @@ const router = express.Router();
 const Booking = require("../models/Booking");
 const User = require("../models/User");
 const Bus = require("../models/Bus");
+const Notification = require("../models/Notification");
 const auth = require("../middleware/auth");
 
 // Helper: get age-group price
@@ -91,6 +92,21 @@ router.post("/scan", auth, async (req, res) => {
     booking.scannedBy = req.user.id;
     booking.scannedAt = Date.now();
     await booking.save();
+
+    // Notify admin
+    try {
+      const notif = await Notification.create({
+        title: "Ticket Scanned",
+        message: `Ticket for ${booking.boardingPoint} to ${booking.droppingPoint} was scanned by conductor.`,
+        type: "success",
+        targetRole: "admin"
+      });
+      const io = req.app.get('io');
+      if (io) {
+        io.emit('new_admin_notification', notif);
+        io.emit('admin_data_updated');
+      }
+    } catch(err) { console.error(err); }
 
     return res.status(200).json({
       message: "Ticket scanned successfully",
@@ -243,6 +259,21 @@ router.post("/deduct-pass", auth, async (req, res) => {
         scannedAt: Date.now()
       });
 
+      // Notify admin
+      try {
+        const notif = await Notification.create({
+          title: "Failed Spot Booking",
+          message: `${passenger.name} had insufficient balance for a spot booking of ₹${totalPrice}.`,
+          type: "warning",
+          targetRole: "admin"
+        });
+        const io = req.app.get('io');
+        if (io) {
+          io.emit('new_admin_notification', notif);
+          io.emit('admin_data_updated');
+        }
+      } catch(err) { console.error(err); }
+
       return res.status(400).json({
         message: "Transaction failed: Insufficient balance",
         insufficientBalance: true,
@@ -275,6 +306,21 @@ router.post("/deduct-pass", auth, async (req, res) => {
       scannedBy: req.user.id,
       scannedAt: Date.now()
     });
+
+    // Notify admin
+    try {
+      const notif = await Notification.create({
+        title: "Spot Booking Successful",
+        message: `Conductor booked ticket for ${passenger.name} for ₹${totalPrice}.`,
+        type: "success",
+        targetRole: "admin"
+      });
+      const io = req.app.get('io');
+      if (io) {
+        io.emit('new_admin_notification', notif);
+        io.emit('admin_data_updated');
+      }
+    } catch(err) { console.error(err); }
 
     return res.status(200).json({
       message: "Monthly pass spot booking successful",
@@ -347,6 +393,21 @@ router.post("/refund-booking", auth, async (req, res) => {
     booking.status = "refunded";
     booking.paymentStatus = "refunded";
     await booking.save();
+
+    // Notify admin
+    try {
+      const notif = await Notification.create({
+        title: "Ticket Refunded",
+        message: `Conductor refunded ₹${booking.totalPrice} to ${passenger.name}.`,
+        type: "info",
+        targetRole: "admin"
+      });
+      const io = req.app.get('io');
+      if (io) {
+        io.emit('new_admin_notification', notif);
+        io.emit('admin_data_updated');
+      }
+    } catch(err) { console.error(err); }
 
     return res.status(200).json({
       message: "Refund processed successfully",

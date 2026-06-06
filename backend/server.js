@@ -47,10 +47,22 @@ connectDB();
 
 
 
-// ================= EXPRESS APP =================
+// ================= EXPRESS APP & SOCKET.IO =================
 
-const app =
-  express();
+const app = express();
+const http = require("http");
+const { Server } = require("socket.io");
+const server = http.createServer(app);
+const io = new Server(server, { cors: { origin: "*" } });
+
+app.set('io', io); // Make io available in routes via req.app.get('io')
+
+io.on('connection', (socket) => {
+  console.log('A client connected:', socket.id);
+  socket.on('disconnect', () => {
+    console.log('Client disconnected:', socket.id);
+  });
+});
 
 
 
@@ -153,16 +165,6 @@ const PORT =
 
 
 
-app.listen(
-
-  PORT,
-
-  () => {
-
-    console.log(
-
-      `Server running on port ${PORT}`
-
-    );
-
+server.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
 });

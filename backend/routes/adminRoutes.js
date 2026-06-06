@@ -39,10 +39,11 @@ router.post("/login", async (req, res) => {
 // ================= DASHBOARD STATS =================
 router.get("/stats", adminAuth, async (req, res) => {
   try {
-    const totalUsers    = await User.countDocuments({ role: "user" });
-    const totalBuses    = await Bus.countDocuments();
-    const totalBookings = await Booking.countDocuments({ status: { $ne: "failed" } });
-    const activeBuses   = await Bus.countDocuments({ isActive: true });
+    const totalUsers      = await User.countDocuments({ role: "user" });
+    const totalBuses      = await Bus.countDocuments();
+    const totalBookings   = await Booking.countDocuments({ status: { $ne: "failed" } });
+    const activeBuses     = await Bus.countDocuments({ isActive: true });
+    const totalConductors = await User.countDocuments({ role: "conductor" });
 
     // Revenue
     const bookings = await Booking.find({ status: { $ne: "failed" } });
@@ -55,7 +56,7 @@ router.get("/stats", adminAuth, async (req, res) => {
       { $sort: { _id: 1 } }
     ]);
 
-    res.status(200).json({ totalUsers, totalBuses, totalBookings, activeBuses, totalRevenue, ageGroups });
+    res.status(200).json({ totalUsers, totalBuses, totalBookings, activeBuses, totalRevenue, ageGroups, totalConductors });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -107,8 +108,9 @@ router.delete("/users/:id", adminAuth, async (req, res) => {
 router.get("/bookings", adminAuth, async (req, res) => {
   try {
     const bookings = await Booking.find()
-      .populate("userId", "name email ageGroup")
+      .populate("userId", "name email ageGroup userPhoto")
       .populate("busId", "busName busNumber from to")
+      .populate("scannedBy", "name email role userPhoto")
       .sort({ createdAt: -1 });
     res.status(200).json(bookings);
   } catch (error) {
@@ -140,6 +142,118 @@ router.get("/transactions", adminAuth, async (req, res) => {
       .populate("userId", "name email ageGroup")
       .sort({ createdAt: -1 });
     res.status(200).json(transactions);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+const upload = require("../middleware/upload");
+
+// ================= GET ALL CONDUCTORS =================
+router.get("/conductors", adminAuth, async (req, res) => {
+  try {
+    const conductors = await User.find({ role: "conductor" }).sort({ createdAt: -1 });
+    res.status(200).json(conductors);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// ================= ADD CONDUCTOR =================
+router.post("/conductors/add", adminAuth, upload.single("userPhoto"), async (req, res) => {
+  try {
+    const { name, email, password, phone, experience } = req.body;
+    const exists = await User.findOne({ email });
+    if (exists) return res.status(400).json({ message: "Conductor email already exists" });
+
+    const hashed = await bcrypt.hash(password, 10);
+    const data = {
+      name,
+      email,
+      password: hashed,
+      phone,
+      experience: experience ? parseInt(experience) : 0,
+      role: "conductor",
+      isVerified: true
+    };
+    if (req.file) {
+      data.userPhoto = req.file.path;
+    }
+
+    const conductor = await User.create(data);
+    res.status(201).json({ message: "Conductor created successfully", conductor });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// ================= DELETE CONDUCTOR =================
+router.delete("/conductors/:id", adminAuth, async (req, res) => {
+  try {
+    await User.findByIdAndDelete(req.params.id);
+    res.status(200).json({ message: "Conductor deleted successfully" });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// ================= EDIT CONDUCTOR =================
+router.put("/conductors/:id", adminAuth, upload.single("userPhoto"), async (req, res) => {
+  try {
+    const { name, email, password, phone, experience } = req.body;
+    const conductor = await User.findById(req.params.id);
+    if (!conductor) return res.status(404).json({ message: "Conductor not found" });
+
+    // If email is changing, check if it's already used
+    if (email && email.toLowerCase() !== conductor.email.toLowerCase()) {
+      const exists = await User.findOne({ email: email.trim().toLowerCase() });
+      if (exists) return res.status(400).json({ message: "Email already exists" });
+      conductor.email = email.trim().toLowerCase();
+    }
+
+    if (name) conductor.name = name.trim();
+    if (phone !== undefined) conductor.phone = phone.trim();
+    if (experience !== undefined) conductor.experience = experience ? parseInt(experience) : 0;
+
+    if (password) {
+      conductor.password = await bcrypt.hash(password, 10);
+    }
+
+    if (req.file) {
+      conductor.userPhoto = req.file.path;
+    }
+
+    await conductor.save();
+    res.status(200).json({ message: "Conductor updated successfully", conductor });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+const Notification = require("../models/Notification");
+
+// ================= GET NOTIFICATIONS =================
+router.get("/notifications", adminAuth, async (req, res) => {
+  try {
+    const notifications = await Notification.find({ targetRole: "admin" })
+      .sort({ createdAt: -1 })
+      .limit(50);
+    res.status(200).json(notifications);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// ================= MARK NOTIFICATION AS READ =================
+router.put("/notifications/read", adminAuth, async (req, res) => {
+  try {
+    const { id } = req.body;
+    if (id === 'all') {
+      await Notification.updateMany({ targetRole: "admin", read: false }, { read: true });
+    } else if (id) {
+      await Notification.findByIdAndUpdate(id, { read: true });
+    }
+    res.status(200).json({ message: "Notifications marked as read" });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

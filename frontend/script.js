@@ -456,6 +456,10 @@ if (loginForm) {
     submitBtn.disabled = true;
     submitBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Logging in...`;
 
+    // Show Fullscreen Loader
+    const loaderOverlay = document.getElementById("loginLoaderOverlay");
+    if (loaderOverlay) loaderOverlay.classList.add("active");
+
     try {
       const response = await fetch(`${API_BASE_URL}/auth/login`, {
         method: "POST",
@@ -488,11 +492,13 @@ if (loginForm) {
           }
         }, 1500);
       } else {
+        if (loaderOverlay) loaderOverlay.classList.remove("active");
         showToast(data.message || "Invalid credentials.", "error");
         document.getElementById("loginMessage").innerText = data.message || "Login failed.";
         document.getElementById("loginMessage").style.color = "var(--danger)";
       }
     } catch (error) {
+      if (loaderOverlay) loaderOverlay.classList.remove("active");
       console.error(error);
       showToast("Network error. Please check your connection.", "error");
     } finally {
@@ -514,6 +520,10 @@ if (busList) {
       if (!response.ok) throw new Error("Failed to fetch buses");
 
       const buses = await response.json();
+      
+      // Add artificial delay so the beautiful loader animation can be seen
+      await new Promise(resolve => setTimeout(resolve, 1200));
+
       busList.innerHTML = "";
 
       if (buses.length === 0) {
@@ -521,45 +531,56 @@ if (busList) {
         return;
       }
 
-      buses.forEach(bus => {
-        const allStops = [bus.from, ...(bus.stops || []), bus.to];
-        const stopsHtml = bus.stops && bus.stops.length
-          ? `<div style="font-size:.75rem;color:var(--text-muted);margin:6px 0"><i class="fas fa-map-pin" style="color:#6366f1;margin-right:4px"></i>${bus.stops.join(' → ')}</div>`
+      let cardsHtml = "";
+      buses.forEach((bus, index) => {
+        const photoHtml = bus.busPhoto
+          ? `<div class="bus-card-img-wrap"><img class="bus-card-img" src="/${bus.busPhoto.replace(/\\/g,'/')}" onerror="this.parentElement.classList.add('no-img'); this.style.display='none'; this.parentElement.innerHTML='<i class=\\'fas fa-bus\\'></i>';" alt="${bus.busName}"><div class="bus-img-overlay"></div></div>`
+          : `<div class="bus-card-img-wrap no-img"><i class="fas fa-bus"></i></div>`;
+
+        const stopsPreview = bus.stops && bus.stops.length
+          ? `<div class="bus-stops-preview"><i class="fas fa-map-pin"></i> ${bus.stops.join(' → ')}</div>`
           : '';
 
-        busList.innerHTML += `
-          <div class="bus-card">
-            <div class="bus-header">
-              <div class="bus-name-wrap">
-                <h3>${bus.busName}</h3>
-                <span class="bus-type-badge">${bus.busName.toLowerCase().includes('sleeper') ? '<i class="fas fa-bed"></i> Luxury Sleeper' : '<i class="fas fa-snowflake"></i> Express AC'}</span>
+        cardsHtml += `
+          <div class="bus-card" style="animation-delay: ${index * 0.08}s" onclick="openBookingModal('${bus._id}')">
+            ${photoHtml}
+            <div class="bus-card-content">
+              <div class="bus-header">
+                <div class="bus-name-wrap">
+                  <h3>${bus.busName}</h3>
+                  <span class="bus-type-badge">${bus.busName.toLowerCase().includes('sleeper') ? '<i class="fas fa-bed"></i> Luxury Sleeper' : (bus.busType === 'Express' ? '<i class="fas fa-bolt"></i> Express' : (bus.busType === 'Mediate' ? '<i class="fas fa-route"></i> Mediate' : '<i class="fas fa-bus"></i> Ordinary'))}</span>
+                </div>
+                <div class="bus-price">₹${bus.price}</div>
               </div>
-              <div class="bus-price">₹${bus.price}</div>
-            </div>
 
-            <div class="bus-route-visual">
-              <div class="route-point from">
-                <div class="route-label">From</div>
-                <div class="route-name">${bus.from}</div>
+              <div class="bus-route-visual">
+                <div class="route-point from">
+                  <div class="route-label">Departure</div>
+                  <div class="route-name">${bus.from}</div>
+                  <div class="route-time">${bus.departureTime || '08:00 AM'}</div>
+                </div>
+                <div class="route-line-wrap">
+                  <div class="route-duration">Est. 4h 30m</div>
+                  <div class="route-line"></div>
+                </div>
+                <div class="route-point to">
+                  <div class="route-label">Arrival</div>
+                  <div class="route-name">${bus.to}</div>
+                  <div class="route-time">${bus.arrivalTime || '12:30 PM'}</div>
+                </div>
               </div>
-              <div class="route-line-wrap">
-                <i class="fas fa-bus route-bus-icon"></i>
-                <div class="route-line"></div>
-              </div>
-              <div class="route-point to">
-                <div class="route-label">To</div>
-                <div class="route-name">${bus.to}</div>
-              </div>
-            </div>
 
-            ${stopsHtml}
+              ${stopsPreview}
 
-            <div class="bus-footer" style="justify-content: flex-end;">
-              <span style="font-size:0.85rem;color:var(--text-muted);font-weight:600;"><i class="fas fa-id-card"></i> Spot Billing & Pass Deduction Only</span>
+              <div class="bus-footer">
+                <span class="bus-footer-info"><i class="fas fa-id-card"></i> Spot Billing & Pass Only</span>
+                <button class="book-now-btn">Book Seat</button>
+              </div>
             </div>
           </div>
         `;
       });
+      busList.innerHTML = cardsHtml;
     } catch (error) {
       console.error(error);
       busList.innerHTML = `<div class="empty-state" style="color:var(--danger);"><i class="fas fa-exclamation-triangle"></i><p>Failed to load routes. Is the backend server running?</p></div>`;
@@ -737,7 +758,17 @@ async function confirmBooking() {
         prefill: {
           name: orderData.userName || "BusFlux User",
           email: orderData.userEmail || "user@example.com",
-          contact: orderData.userPhone || "9999999999"
+          contact: (orderData.userPhone && orderData.userPhone.length >= 10) ? orderData.userPhone : "9999999999"
+        },
+        display: {
+          blocks: {
+            upi: {
+              name: "Pay via Google Pay / PhonePe / UPI",
+              instruments: [{ method: "upi" }]
+            }
+          },
+          sequence: ["block.upi"],
+          preferences: { show_default_blocks: true }
         },
         theme: {
           color: "#6366f1"
@@ -800,20 +831,29 @@ async function confirmBooking() {
         }
       };
 
-      const rzp = new Razorpay(options);
-      rzp.on('payment.failed', function(response) {
-        showToast(`Payment failed: ${response.error.description}`, "error");
+        try {
+          const rzp = new Razorpay(options);
+          rzp.on('payment.failed', function(response) {
+            if (typeof showToast === "function") showToast(`Payment failed: ${response.error.description}`, "error");
+            else alert(`Payment failed: ${response.error.description}`);
+            btn.disabled = false;
+            btn.innerHTML = `<i class="fas fa-shield-halved"></i> Pay Securely`;
+          });
+          rzp.open();
+        } catch (rzpErr) {
+          console.error("Razorpay Error:", rzpErr);
+          alert("Failed to open Razorpay checkout. Please check if your browser is blocking popups or scripts.");
+          btn.disabled = false;
+          btn.innerHTML = `<i class="fas fa-shield-halved"></i> Pay Securely`;
+        }
+
+      } catch (e) {
+        console.error("Initiate Payment Error:", e);
+        if (typeof showToast === "function") showToast("Network error creating payment.", "error");
+        else alert("Network error creating payment.");
         btn.disabled = false;
         btn.innerHTML = `<i class="fas fa-shield-halved"></i> Pay Securely`;
-      });
-      rzp.open();
-
-    } catch (e) {
-      console.error(e);
-      showToast("Network error creating payment.", "error");
-      btn.disabled = false;
-      btn.innerHTML = `<i class="fas fa-shield-halved"></i> Pay Securely`;
-    }
+      }
   } else {
     // ── WALLET FLOW (existing) ──
     try {
@@ -1436,7 +1476,7 @@ async function rechargeWallet(e) {
       prefill: {
         name: orderData.userName || "BusFlux User",
         email: orderData.userEmail || "user@example.com",
-        contact: orderData.userPhone || "9999999999"
+        contact: (orderData.userPhone && orderData.userPhone.length >= 10) ? orderData.userPhone : "9999999999"
       },
       theme: {
         color: "#6366f1"

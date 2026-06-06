@@ -10,8 +10,8 @@ const busSchema = new mongoose.Schema({
   // ── Route ──
   from: { type: String, required: true },
   to: { type: String, required: true },
-  departureTime: { type: String, required: true },
-  arrivalTime: { type: String, required: true },
+  departureTime: { type: String, default: "" },
+  arrivalTime: { type: String, default: "" },
   stops: [{ type: String }],          // intermediate stops
 
   // ── Pricing ──
@@ -42,7 +42,9 @@ const busSchema = new mongoose.Schema({
   conductorExperience: { type: String, default: "" },
 
   // ── Status ──
-  isActive: { type: Boolean, default: true }
+  isActive: { type: Boolean, default: true },
+  isExpress: { type: Boolean, default: false },
+  busType: { type: String, default: "Ordinary" }
 
 }, { timestamps: true });
 

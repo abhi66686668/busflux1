@@ -66,6 +66,8 @@ router.post("/book/:busId", auth, async (req, res) => {
       return res.status(400).json({ message: `Insufficient wallet balance (Current: ₹${user.balance || 0}). Please recharge.` });
     }
 
+    const Notification = require("../models/Notification");
+    
     // Create booking
     const booking = await Booking.create({
       userId:        req.user.id,
@@ -77,6 +79,21 @@ router.post("/book/:busId", auth, async (req, res) => {
       paymentMethod: "wallet",
       paymentStatus: "paid"
     });
+
+    // Notify admin
+    try {
+      const notif = await Notification.create({
+        title: "New Wallet Booking",
+        message: `${user.name} booked ${seatsBooked} seat(s) on ${bus.busName} using wallet balance (₹${totalPrice}).`,
+        type: "success",
+        targetRole: "admin"
+      });
+      const io = req.app.get('io');
+      if (io) {
+        io.emit('new_admin_notification', notif);
+        io.emit('admin_data_updated');
+      }
+    } catch(err) { console.error(err); }
 
     // Deduct from wallet
     user.balance -= totalPrice;

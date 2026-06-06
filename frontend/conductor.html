@@ -1785,6 +1785,14 @@
           
           // Refresh stats
           refreshDashboardData();
+
+          // Auto reset for next passenger
+          setTimeout(() => {
+            const currentHtml = document.getElementById("billingResultArea").innerHTML;
+            if (currentHtml.includes("DEDUCTION SUCCESSFUL")) {
+              resetBillingArea();
+            }
+          }, 4000);
         } else {
           // Failure
           if (data.insufficientBalance) {
@@ -1808,6 +1816,10 @@
             
             // Trigger working notification
             addNotification("Declined: Insufficient Balance", `Fare ₹${data.requiredAmount} failed for ${data.passenger.name} (Has ₹${data.currentBalance}).`, "danger");
+            
+            setTimeout(() => {
+              if (document.getElementById("billingResultArea").innerHTML.includes("DECLINED")) resetBillingArea();
+            }, 5000);
           } else {
             resArea.innerHTML = `
               <div style="animation: fadeUp 0.4s ease; text-align: center; width: 100%;">
@@ -1822,6 +1834,10 @@
             
             // Trigger working notification
             addNotification("Deduction Failed", data.message || "Error issuing spot ticket.", "danger");
+            
+            setTimeout(() => {
+              if (document.getElementById("billingResultArea").innerHTML.includes("Deduction Failed")) resetBillingArea();
+            }, 5000);
           }
           refreshDashboardData();
         }

@@ -162,10 +162,94 @@
     <p class="subtitle">Search available routes and schedules</p>
 
     <div id="busList">
-      <div style="text-align:center;padding:40px;color:var(--text-muted);">
-        <i class="fas fa-spinner fa-spin" style="font-size:2.5rem;margin-bottom:15px;color:#6366f1;"></i>
-        <p>Loading available routes...</p>
+      <div class="loader-container">
+        <div class="modern-loader"></div>
+        <p class="loader-text">Finding best routes...</p>
       </div>
+    </div>
+  </div>
+
+  <!-- BOOKING MODAL -->
+  <div class="bk-overlay" id="bookingModal">
+    <div class="bk-modal">
+      <button class="bk-close" onclick="closeBookingModal()"><i class="fas fa-times"></i></button>
+      <div class="bk-title" id="bkBusName">Bus Name</div>
+      <div class="bk-subtitle">Complete your booking</div>
+
+      <div class="bk-route-bar">
+        <div class="city" id="bkFrom">City A</div>
+        <div class="arrow"><i class="fas fa-long-arrow-alt-right"></i></div>
+        <div class="city" id="bkTo">City B</div>
+      </div>
+
+      <div class="bk-row">
+        <div>
+          <div class="bk-label">Boarding Point</div>
+          <select class="bk-select" id="bkBoarding" onchange="updatePrice()"></select>
+        </div>
+        <div>
+          <div class="bk-label">Dropping Point</div>
+          <select class="bk-select" id="bkDropping" onchange="updatePrice()"></select>
+        </div>
+      </div>
+
+      <div class="warning-msg" id="bkWarning">
+        <i class="fas fa-exclamation-circle"></i> <span id="bkWarningText"></span>
+      </div>
+
+      <div class="price-card">
+        <div class="price-row">
+          <span>Passenger Type</span>
+          <span id="bkAgeGroup" style="color:#f1f5f9;"><i class="fas fa-user"></i> Standard</span>
+        </div>
+        <div class="price-row">
+          <span>Base Price (Per Seat)</span>
+          <span id="bkPricePerSeat">₹0</span>
+        </div>
+        <div class="price-row total">
+          <span>Total Fare</span>
+          <span id="bkTotal">₹0</span>
+        </div>
+      </div>
+
+      <div class="bk-label" style="margin-top:5px; margin-bottom:10px;">Select Payment Method</div>
+      <div style="display:flex; gap:15px; margin-bottom: 25px;">
+        <label style="display:flex; align-items:center; gap:8px; cursor:pointer; color:#f1f5f9; font-size:0.9rem;">
+          <input type="radio" name="payMethod" value="razorpay" checked>
+          <i class="fas fa-credit-card" style="color:#6366f1;"></i> Pay via Razorpay
+        </label>
+        <label style="display:flex; align-items:center; gap:8px; cursor:pointer; color:#f1f5f9; font-size:0.9rem;">
+          <input type="radio" name="payMethod" value="wallet">
+          <i class="fas fa-wallet" style="color:#10b981;"></i> BusFlux Wallet
+        </label>
+      </div>
+
+      <button class="bk-btn" id="bkConfirmBtn" onclick="confirmBooking()">
+        <i class="fas fa-shield-halved"></i> Proceed to Pay
+      </button>
+    </div>
+  </div>
+
+  <!-- TICKET SUCCESS MODAL -->
+  <div class="bk-overlay" id="ticketSuccessModal">
+    <div class="bk-modal" style="max-width: 400px; text-align: center;">
+      <div style="font-size: 3rem; color: #10b981; margin-bottom: 10px;"><i class="fas fa-check-circle"></i></div>
+      <h2 style="color: #f1f5f9; margin-bottom: 5px;">Ticket Booked!</h2>
+      <p style="color: #64748b; font-size: 0.9rem; margin-bottom: 20px;">Your seat has been confirmed.</p>
+      
+      <div style="background: #fff; padding: 15px; border-radius: 12px; margin-bottom: 20px; display: inline-block;">
+        <img id="ticketQR" src="" alt="Ticket QR" style="width: 150px; height: 150px;">
+      </div>
+      
+      <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 12px; text-align: left; margin-bottom: 25px;">
+        <div style="font-size: 0.8rem; color: #94a3b8; margin-bottom: 4px;">TICKET ID</div>
+        <div id="ticketIdDisplay" style="font-weight: 700; color: #f1f5f9; font-family: monospace; font-size: 1.1rem; margin-bottom: 12px;">-</div>
+        
+        <div style="font-size: 0.8rem; color: #94a3b8; margin-bottom: 4px;">ROUTE</div>
+        <div id="ticketRouteDisplay" style="font-weight: 700; color: #f1f5f9; font-size: 1rem;">-</div>
+      </div>
+
+      <button class="bk-btn" onclick="closeTicketModal()">Done</button>
     </div>
   </div>
 

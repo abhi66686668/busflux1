@@ -7,6 +7,8 @@ const User =
   require("../models/User");
 
 const Transaction = require("../models/Transaction");
+const Booking = require("../models/Booking");
+const Notification = require("../models/Notification");
 
 const bcrypt =
   require("bcryptjs");
@@ -386,6 +388,23 @@ router.post(
 await user.save();
 
 console.log("Registration completed");
+
+// CREATE ADMIN NOTIFICATION
+try {
+  const notif = await Notification.create({
+    title: "New User Registered",
+    message: `${user.name} (${user.email}) just joined BusFlux.`,
+    type: "info",
+    targetRole: "admin"
+  });
+  
+  const io = req.app.get('io');
+  if (io) {
+    io.emit('new_admin_notification', notif);
+  }
+} catch (err) {
+  console.error("Failed to create admin notification:", err.message);
+}
 
 
 
@@ -890,7 +909,52 @@ router.post("/wallet/verify-payment", auth, async (req, res) => {
   }
 });
 
-
+// ================= GET WALLET TRANSACTIONS =================
+router.get("/wallet/transactions", auth, async (req, res) => {
+  try {
+    const recharges = await Transaction.find({ userId: req.user.id }).sort({ createdAt: -1 });
+    const bookings = await Booking.find({ userId: req.user.id }).populate("busId").sort({ createdAt: -1 });
+    
+    // Combine them
+    const combined = [];
+    
+    recharges.forEach(r => {
+      combined.push({
+        _id: r._id,
+        type: "recharge",
+        amount: r.amount,
+        bonus: r.bonus,
+        totalCredit: r.totalCredit,
+        method: r.method,
+        status: r.status,
+        createdAt: r.createdAt
+      });
+    });
+    
+    bookings.forEach(b => {
+      if (b.status === "failed") return;
+      combined.push({
+        _id: b._id,
+        type: "booking",
+        amount: -b.totalPrice,
+        busName: b.busId?.busName || "BusFlux Ride",
+        busNumber: b.busId?.busNumber || "",
+        route: b.busId ? `${b.boardingPoint || b.busId.from} → ${b.droppingPoint || b.busId.to}` : "Ride",
+        seatsBooked: b.seatsBooked,
+        status: b.status === "paid" ? "Paid" : b.status,
+        paymentMethod: b.paymentMethod,
+        createdAt: b.createdAt
+      });
+    });
+    
+    // Sort combined by createdAt descending
+    combined.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    
+    res.status(200).json(combined);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
 
 module.exports = router;
 

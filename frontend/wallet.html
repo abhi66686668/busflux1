@@ -165,6 +165,19 @@
     .pm-icon {
       display: flex; align-items: center; gap: 5px;
       font-size: .78rem; color: #94a3b8; font-weight: 600;
+      cursor: pointer;
+      padding: 6px 12px;
+      border-radius: 8px;
+      border: 1px solid transparent;
+      transition: all .2s;
+    }
+    .pm-icon:hover {
+      background: rgba(255,255,255,.05);
+    }
+    .pm-icon.selected {
+      background: rgba(99,102,241,.1);
+      border-color: rgba(99,102,241,.4);
+      color: #c7d2fe;
     }
     .pm-icon i { font-size: 1rem; }
     .pm-icon.gpay i { color: #4285F4; }
@@ -197,8 +210,60 @@
       font-size: .75rem; color: #475569;
     }
     .security-footer i { color: #10b981; margin-right: 4px; }
+    /* ── TRANSACTION FILTERS ── */
+    .tx-filters {
+      display: flex; gap: 10px; margin-bottom: 20px;
+      border-bottom: 1px solid rgba(255,255,255,.06);
+      padding-bottom: 16px;
+    }
+    .tx-filter-btn {
+      background: rgba(255,255,255,.03);
+      border: 1px solid rgba(255,255,255,.06);
+      color: #94a3b8; padding: 10px 18px; border-radius: 14px;
+      font-size: .8rem; font-weight: 600; cursor: pointer;
+      transition: all .25s ease; font-family: 'Inter', sans-serif;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .tx-filter-btn:hover {
+      background: rgba(255,255,255,.08); color: #f1f5f9;
+      transform: translateY(-1px);
+    }
+    .tx-filter-btn.active {
+      background: linear-gradient(135deg, #6366f1, #a855f7);
+      border-color: transparent; color: #ffffff;
+      box-shadow: 0 8px 20px rgba(99,102,241,.3);
+    }
 
-    /* ── RESPONSIVE ── */
+    /* ── DEMO SCANNER MODAL ── */
+    .scanner-modal-overlay {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,.8); backdrop-filter: blur(5px);
+      z-index: 9999; display: flex; align-items: center; justify-content: center;
+      opacity: 0; pointer-events: none; transition: opacity .3s;
+    }
+    .scanner-modal-overlay.open { opacity: 1; pointer-events: auto; }
+    .scanner-modal {
+      background: #fff; width: 90%; max-width: 360px; border-radius: 20px;
+      padding: 30px; text-align: center; color: #1e293b;
+      box-shadow: 0 20px 60px rgba(0,0,0,.3);
+      transform: translateY(20px); transition: transform .3s;
+    }
+    .scanner-modal-overlay.open .scanner-modal { transform: translateY(0); }
+    .scanner-qr-box {
+      width: 200px; height: 200px; margin: 20px auto; padding: 15px;
+      border: 2px dashed #cbd5e1; border-radius: 16px;
+    }
+    .scanner-qr-box img { width: 100%; height: 100%; }
+    .scanner-btn {
+      width: 100%; padding: 14px; background: #10b981; color: white;
+      border: none; border-radius: 12px; font-weight: bold; font-size: 1.05rem;
+      cursor: pointer; margin-top: 15px; transition: .2s;
+    }
+    .scanner-btn:hover { background: #059669; }
+    .scanner-close {
+      margin-top: 15px; color: #64748b; cursor: pointer; font-size: .9rem;
+      text-decoration: underline; background: none; border: none; font-weight: 600; display: inline-block;
+    }
     @media (max-width: 640px) {
       .preset-grid { grid-template-columns: repeat(3, 1fr); }
       .wallet-balance-value { font-size: 2.4rem; }
@@ -238,27 +303,23 @@
     <p class="subtitle">Recharge your BusFlux wallet and pay for rides instantly</p>
 
     <!-- ══════════ WALLET BALANCE CARD ══════════ -->
-    <div class="wallet-hero">
-      <div class="wallet-chip"></div>
-      <div class="wallet-hero-top">
-        <i class="fas fa-wallet"></i>
-        <span>BusFlux Wallet</span>
+    <div class="wallet-hero" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px;">
+      <div style="flex: 1; min-width: 200px;">
+        <div class="wallet-hero-top">
+          <i class="fas fa-wallet"></i>
+          <span>BusFlux Wallet</span>
+        </div>
+        <div class="wallet-balance-value" id="walletBalance">₹ --</div>
+        <div class="wallet-balance-sub">Available balance · Updated just now</div>
+        <div class="wallet-brand-row">
+          <i class="fas fa-shield-halved"></i>
+          <span>Secure Digital Wallet</span>
+        </div>
       </div>
-      <div class="wallet-balance-value" id="walletBalance">₹ --</div>
-      <div class="wallet-balance-sub">Available balance · Updated just now</div>
-      <div class="wallet-brand-row">
-        <i class="fas fa-shield-halved"></i>
-        <span>Secure Digital Wallet</span>
-      </div>
-    </div>
-
-    <!-- ══════════ PERMANENT BOARDING PASS QR CODE ══════════ -->
-    <div class="recharge-section" style="text-align: center; margin-bottom: 28px; padding: 24px;">
-      <div class="recharge-title" style="font-size: 1.15rem; font-weight: 800; margin-bottom: 4px; background: linear-gradient(135deg,#6366f1,#a855f7); -webkit-background-clip: text; -webkit-text-fill-color: transparent;"><i class="fas fa-id-card" style="margin-right:6px"></i>My Permanent Boarding Pass QR</div>
-      <div class="recharge-subtitle" style="font-size: .82rem; color: #64748b; margin-bottom: 16px;">Present this QR code to the conductor when boarding to deduct fare from your wallet.</div>
       
-      <div style="background: #fff; padding: 12px; border-radius: 16px; display: inline-block; box-shadow: 0 4px 15px rgba(0,0,0,0.3); border: 2px solid rgba(99,102,241,0.2);">
-        <img id="walletProfileQrImage" src="https://cdn-icons-png.flaticon.com/512/149/149071.png" alt="Profile QR Code" style="width: 140px; height: 140px; display: block;">
+      <div style="background: rgba(255,255,255,0.95); padding: 8px; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.2); z-index: 1; display: flex; flex-direction: column; align-items: center;">
+        <img id="walletProfileQrImage" src="https://cdn-icons-png.flaticon.com/512/149/149071.png" alt="Profile QR Code" style="width: 100px; height: 100px; display: block; border-radius: 8px;">
+        <div style="font-size: 0.65rem; font-weight: 800; color: #4f46e5; margin-top: 6px; text-transform: uppercase; letter-spacing: 0.5px;">Boarding Pass</div>
       </div>
     </div>
 
@@ -302,11 +363,11 @@
       <div class="pay-methods-bar">
         <span class="pm-label">Pay via</span>
         <div class="pm-icons">
-          <span class="pm-icon gpay"><i class="fab fa-google-pay"></i> GPay</span>
-          <span class="pm-icon phonepe"><i class="fas fa-mobile-screen"></i> PhonePe</span>
-          <span class="pm-icon paytm"><i class="fas fa-p"></i> Paytm</span>
-          <span class="pm-icon upi"><i class="fas fa-qrcode"></i> UPI</span>
-          <span class="pm-icon cards"><i class="fas fa-credit-card"></i> Cards</span>
+          <span class="pm-icon gpay selected" onclick="selectPaymentMethod('upi', 'gpay')"><i class="fab fa-google-pay"></i> GPay</span>
+          <span class="pm-icon phonepe" onclick="selectPaymentMethod('upi', 'phonepe')"><i class="fas fa-mobile-screen"></i> PhonePe</span>
+          <span class="pm-icon paytm" onclick="selectPaymentMethod('upi', 'paytm')"><i class="fas fa-p"></i> Paytm</span>
+          <span class="pm-icon upi" onclick="selectPaymentMethod('upi', 'upi')"><i class="fas fa-qrcode"></i> UPI</span>
+          <span class="pm-icon cards" onclick="selectPaymentMethod('card', 'cards')"><i class="fas fa-credit-card"></i> Cards</span>
         </div>
       </div>
 
@@ -316,9 +377,38 @@
       </button>
     </div>
 
+    <!-- ══════════ TRANSACTION HISTORY SECTION ══════════ -->
+    <div class="recharge-section" id="transactionHistorySection" style="margin-top: 28px; display: none;">
+      <div class="recharge-title"><i class="fas fa-history" style="margin-right:6px"></i>Transaction History</div>
+      <div class="recharge-subtitle">Your recent wallet recharges and booking deductions</div>
+      
+      <!-- Transaction Filters -->
+      <div class="tx-filters">
+        <button class="tx-filter-btn active" onclick="filterTransactions(this, 'all')"><i class="fas fa-list"></i> All</button>
+        <button class="tx-filter-btn" onclick="filterTransactions(this, 'recharge')"><i class="fas fa-plus-circle"></i> Recharges</button>
+        <button class="tx-filter-btn" onclick="filterTransactions(this, 'booking')"><i class="fas fa-ticket-alt"></i> Ticket Purchases</button>
+      </div>
+
+      <div id="transactionsList" style="display: flex; flex-direction: column; gap: 12px;"></div>
+    </div>
+
     <!-- Security footer -->
     <div class="security-footer">
       <i class="fas fa-lock"></i> All transactions are encrypted & secured via Razorpay Payment Gateway
+    </div>
+  </div>
+
+  <!-- ══════════ DEMO SCANNER MODAL ══════════ -->
+  <div class="scanner-modal-overlay" id="demoScannerModal">
+    <div class="scanner-modal">
+      <h2 style="margin:0; font-size: 1.4rem; color: #1e293b;"><i class="fas fa-qrcode" style="color:#6366f1;"></i> Scan to Pay</h2>
+      <p style="color: #64748b; font-size: .9rem; margin-top: 6px;">Open GPay / PhonePe and scan</p>
+      <div class="scanner-qr-box">
+        <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=upi://pay?pa=test@ybl&pn=BusFlux" alt="QR Code">
+      </div>
+      <div style="font-size: 1.8rem; font-weight: 800; color: #1e293b; margin-top: 10px;" id="demoScannerAmt">₹500</div>
+      <button class="scanner-btn" id="demoPayBtn" onclick="simulateDemoPayment()">Simulate Successful Scan</button>
+      <button class="scanner-close" onclick="document.getElementById('demoScannerModal').classList.remove('open')">Cancel</button>
     </div>
   </div>
 
@@ -329,6 +419,16 @@
   <script>
     const WALLET_API = "/api";
     let selectedAmount = 500;
+    let selectedPaymentMethod = "upi";
+    let allTransactions = [];
+    let currentFilter = "all";
+
+    // ── Payment method selection ──
+    function selectPaymentMethod(method, iconClass) {
+      document.querySelectorAll('.pm-icon').forEach(icon => icon.classList.remove('selected'));
+      document.querySelector(`.pm-icon.${iconClass}`).classList.add('selected');
+      selectedPaymentMethod = method;
+    }
 
     // ── Load wallet balance & QR ──
     async function loadWalletBalance() {
@@ -361,15 +461,20 @@
       selectedAmount = amount;
       document.getElementById('customAmount').value = '';
       document.getElementById('rechargeBtnAmt').textContent = `₹${amount.toLocaleString('en-IN')}`;
+      document.getElementById('rechargeBtn').disabled = false;
     }
 
     // ── Custom input ──
     function handleCustomInput() {
       const val = parseInt(document.getElementById('customAmount').value);
-      if (val && val >= 10) {
+      if (isNaN(val) || val < 10) {
+        document.getElementById('rechargeBtnAmt').textContent = `Invalid Amount`;
+        document.getElementById('rechargeBtn').disabled = true;
+      } else {
         document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('selected'));
         selectedAmount = val;
         document.getElementById('rechargeBtnAmt').textContent = `₹${val.toLocaleString('en-IN')}`;
+        document.getElementById('rechargeBtn').disabled = false;
       }
     }
 
@@ -383,6 +488,13 @@
 
       if (!selectedAmount || selectedAmount < 10) {
         showToast("Please select or enter a valid amount (min ₹10).", "warning");
+        return;
+      }
+
+      // Intercept for Demo UPI Scanner
+      if (selectedPaymentMethod === "upi") {
+        document.getElementById('demoScannerAmt').innerText = `₹${selectedAmount.toLocaleString('en-IN')}`;
+        document.getElementById('demoScannerModal').classList.add('open');
         return;
       }
 
@@ -417,7 +529,23 @@
           prefill: {
             name: orderData.userName || "BusFlux User",
             email: orderData.userEmail || "user@example.com",
-            contact: orderData.userPhone || "9999999999"
+            contact: (orderData.userPhone && orderData.userPhone.length >= 10) ? orderData.userPhone : "9999999999"
+          },
+          config: {
+            display: {
+              blocks: {
+                preferred: {
+                  name: "Selected Payment Method",
+                  instruments: [{ method: selectedPaymentMethod }]
+                },
+                other: {
+                  name: "Other Payment Modes",
+                  instruments: [{ method: "upi" }, { method: "card" }, { method: "netbanking" }, { method: "wallet" }]
+                }
+              },
+              sequence: ["block.preferred", "block.other"],
+              preferences: { show_default_blocks: false }
+            }
           },
           theme: { color: "#6366f1" },
           handler: async function(response) {
@@ -438,6 +566,7 @@
               if (verifyRes.ok) {
                 showToast(`✅ ₹${selectedAmount} added to wallet successfully!`, "success");
                 loadWalletBalance();
+                loadTransactionHistory();
                 resetRechargeBtn();
               } else {
                 showToast(verifyData.message || "Verification failed.", "error");
@@ -456,16 +585,24 @@
           }
         };
 
-        const rzp = new Razorpay(options);
-        rzp.on('payment.failed', function(response) {
-          showToast(`Payment failed: ${response.error.description}`, "error");
+        try {
+          const rzp = new Razorpay(options);
+          rzp.on('payment.failed', function(response) {
+            if (typeof showToast === "function") showToast(`Payment failed: ${response.error.description}`, "error");
+            else alert(`Payment failed: ${response.error.description}`);
+            resetRechargeBtn();
+          });
+          rzp.open();
+        } catch (rzpErr) {
+          console.error("Razorpay Error:", rzpErr);
+          alert("Failed to open Razorpay checkout. Please check if your browser is blocking popups or scripts.");
           resetRechargeBtn();
-        });
-        rzp.open();
+        }
 
       } catch (e) {
-        console.error(e);
-        showToast("Network error. Please try again.", "error");
+        console.error("Initiate Recharge Error:", e);
+        if (typeof showToast === "function") showToast("Network error. Please try again.", "error");
+        else alert("Network error. Please try again.");
         resetRechargeBtn();
       }
     }
@@ -476,10 +613,134 @@
       btn.innerHTML = `<i class="fas fa-bolt"></i> Recharge Now · <span id="rechargeBtnAmt">₹${selectedAmount.toLocaleString('en-IN')}</span>`;
     }
 
+    async function simulateDemoPayment() {
+      const token = localStorage.getItem("token");
+      const btn = document.getElementById('demoPayBtn');
+      btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Processing...`;
+      
+      try {
+        const verifyRes = await fetch(`${WALLET_API}/payment/wallet-verify`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+          body: JSON.stringify({
+            razorpay_order_id: "order_demo_" + Date.now(),
+            razorpay_payment_id: "pay_demo_success",
+            razorpay_signature: "demo_sig",
+            amount: selectedAmount,
+            method: "UPI (Demo)"
+          })
+        });
+        const verifyData = await verifyRes.json();
+        if (verifyRes.ok) {
+          showToast(`✅ ₹${selectedAmount} added via Demo Scanner!`, "success");
+          loadWalletBalance();
+          loadTransactionHistory();
+          document.getElementById('demoScannerModal').classList.remove('open');
+        } else {
+          showToast(verifyData.message || "Demo verification failed.", "error");
+        }
+      } catch (e) {
+        showToast("Network Error", "error");
+      }
+      btn.innerHTML = `Simulate Successful Scan`;
+    }
+
+    // ── Load transaction history ──
+    async function loadTransactionHistory() {
+      const token = localStorage.getItem("token");
+      if (!token) return;
+      try {
+        const res = await fetch(`${WALLET_API}/auth/wallet/transactions`, {
+          headers: { "Authorization": `Bearer ${token}` }
+        });
+        if (!res.ok) return;
+        const transactions = await res.json();
+        const section = document.getElementById("transactionHistorySection");
+        
+        if (transactions && transactions.length > 0) {
+          allTransactions = transactions;
+          section.style.display = "block";
+          renderTransactions(allTransactions);
+        } else {
+          section.style.display = "none";
+        }
+      } catch (e) {
+        console.error("Failed to load transaction history:", e);
+      }
+    }
+
+    function renderTransactions(txList) {
+      const list = document.getElementById("transactionsList");
+      if (!txList || txList.length === 0) {
+        list.innerHTML = `<div style="text-align:center; color:#64748b; padding:20px;">No transactions found for this filter.</div>`;
+        return;
+      }
+      list.innerHTML = txList.map(t => {
+        const date = new Date(t.createdAt).toLocaleString("en-IN", {
+          day: '2-digit', month: 'short', year: 'numeric',
+          hour: '2-digit', minute: '2-digit'
+        });
+        
+        const isRecharge = t.type === "recharge";
+        const amtSign = isRecharge ? "+" : "-";
+        const amtColor = isRecharge ? "#10b981" : "#f43f5e";
+        const iconHtml = isRecharge 
+          ? `<div style="width: 40px; height: 40px; border-radius: 10px; background: rgba(16, 185, 129, 0.15); color: #10b981; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; flex-shrink: 0"><i class="fas fa-plus"></i></div>`
+          : `<div style="width: 40px; height: 40px; border-radius: 10px; background: rgba(244, 63, 150, 0.15); color: #f43f5e; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; flex-shrink: 0"><i class="fas fa-ticket"></i></div>`;
+        
+        let detailsHtml = "";
+        if (isRecharge) {
+          detailsHtml = `
+            <div style="flex: 1; min-width: 0; text-align: left;">
+              <div style="font-weight: 600; font-size: 0.9rem; color: #f1f5f9;">Wallet Recharge</div>
+              <div style="font-size: 0.72rem; color: #64748b; margin-top: 2px;">Via ${t.method || "Razorpay"}${t.bonus ? ` · Includes ₹${t.bonus} Bonus` : ""}</div>
+              <div style="font-size: 0.7rem; color: #475569; margin-top: 4px;">${date}</div>
+            </div>
+          `;
+        } else {
+          detailsHtml = `
+            <div style="flex: 1; min-width: 0; text-align: left;">
+              <div style="font-weight: 600; font-size: 0.9rem; color: #f1f5f9;">Ticket Purchase</div>
+              <div style="font-size: 0.72rem; color: #64748b; margin-top: 2px;">${t.busName || "Ride"} · Route: ${t.route}</div>
+              <div style="font-size: 0.7rem; color: #475569; margin-top: 4px;">${date}</div>
+            </div>
+          `;
+        }
+        
+        const totalVal = isRecharge ? (t.totalCredit || t.amount) : Math.abs(t.amount);
+        
+        return `
+          <div style="display: flex; align-items: center; gap: 14px; padding: 14px 18px; background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.06); border-radius: 14px; transition: all 0.2s;">
+            ${iconHtml}
+            ${detailsHtml}
+            <div style="text-align: right; flex-shrink: 0;">
+              <div style="font-size: 1.1rem; font-weight: 800; color: ${amtColor};">${amtSign}₹${totalVal.toLocaleString('en-IN')}</div>
+              <div style="font-size: 0.68rem; color: #475569; margin-top: 2px; text-transform: uppercase; letter-spacing: 0.5px;">${t.status || "Completed"}</div>
+            </div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function filterTransactions(btn, type) {
+      document.querySelectorAll(".tx-filter-btn").forEach(b => b.classList.remove("active"));
+      if (btn) btn.classList.add("active");
+      currentFilter = type;
+
+      if (type === "all") {
+        renderTransactions(allTransactions);
+      } else if (type === "recharge") {
+        renderTransactions(allTransactions.filter(t => t.type === "recharge"));
+      } else if (type === "booking") {
+        renderTransactions(allTransactions.filter(t => t.type === "booking"));
+      }
+    }
+
     // ── Init ──
     document.addEventListener("DOMContentLoaded", () => {
       updateNavbar();
       loadWalletBalance();
+      loadTransactionHistory();
     });
   </script>
 </body>
