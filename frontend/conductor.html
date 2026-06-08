@@ -1206,7 +1206,7 @@
             document.getElementById("cName").textContent = user.name || "Conductor";
             document.getElementById("cEmail").textContent = user.email || "Staff";
             if (user.userPhoto) {
-              document.getElementById("cPhoto").src = `${API.replace('/api', '')}/${user.userPhoto.replace(/\\/g, '/')}`;
+              document.getElementById("cPhoto").src = `${window.getImageUrl(user.userPhoto)}`;
             }
             
             // Populate Conductor profile details form fields
@@ -1216,7 +1216,7 @@
             document.getElementById("profileExperience").value = user.experience || "";
             document.getElementById("profilePhone").value = user.phone || "";
             if (user.userPhoto) {
-              document.getElementById("profilePreviewImg").src = `${API.replace('/api', '')}/${user.userPhoto.replace(/\\/g, '/')}`;
+              document.getElementById("profilePreviewImg").src = `${window.getImageUrl(user.userPhoto)}`;
             }
             
             loadBusesList();
@@ -1489,7 +1489,7 @@
       const totalPrice = Math.round(basePrice * ratio);
 
       const photoUrl = passenger.userPhoto 
-        ? `${API.replace('/api', '')}/${passenger.userPhoto.replace(/\\/g, '/')}` 
+        ? `${window.getImageUrl(passenger.userPhoto)}` 
         : 'https://cdn-icons-png.flaticon.com/512/149/149071.png';
 
       const resArea = document.getElementById("billingResultArea");
@@ -1757,7 +1757,7 @@
         if (ok) {
           // Success
           const photoUrl = data.passenger.userPhoto 
-            ? `${API.replace('/api', '')}/${data.passenger.userPhoto.replace(/\\/g, '/')}` 
+            ? `${window.getImageUrl(data.passenger.userPhoto)}` 
             : 'https://cdn-icons-png.flaticon.com/512/149/149071.png';
 
           resArea.innerHTML = `
@@ -1797,7 +1797,7 @@
           // Failure
           if (data.insufficientBalance) {
             const photoUrl = data.passenger.userPhoto 
-              ? `${API.replace('/api', '')}/${data.passenger.userPhoto.replace(/\\/g, '/')}` 
+              ? `${window.getImageUrl(data.passenger.userPhoto)}` 
               : 'https://cdn-icons-png.flaticon.com/512/149/149071.png';
 
             resArea.innerHTML = `
@@ -2135,7 +2135,7 @@
         const time = dateObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
         
         const photoUrl = b.userId?.userPhoto 
-          ? `${API.replace('/api', '')}/${b.userId.userPhoto.replace(/\\/g, '/')}` 
+          ? `${window.getImageUrl(b.userId.userPhoto)}` 
           : 'https://cdn-icons-png.flaticon.com/512/149/149071.png';
 
         const amount = b.totalPrice || 0;
@@ -2313,7 +2313,7 @@
       });
       
       const photoUrl = user.userPhoto 
-        ? `${API.replace('/api', '')}/${user.userPhoto.replace(/\\/g, '/')}` 
+        ? `${window.getImageUrl(user.userPhoto)}` 
         : 'https://cdn-icons-png.flaticon.com/512/149/149071.png';
         
       document.getElementById("modalPassengerPhoto").src = photoUrl;
@@ -2389,7 +2389,7 @@
           // Update header details immediately
           document.getElementById("cName").textContent = data.user.name || "Conductor";
           if (data.user.userPhoto) {
-            document.getElementById("cPhoto").src = `${API.replace('/api', '')}/${data.user.userPhoto.replace(/\\/g, '/')}`;
+            document.getElementById("cPhoto").src = `${window.getImageUrl(data.user.userPhoto)}`;
           }
           selectedProfileFile = null;
         } else {
@@ -2566,7 +2566,7 @@
           const bus = booking.busId || {};
           
           const photoUrl = passenger.userPhoto 
-            ? `${API.replace('/api', '')}/${passenger.userPhoto.replace(/\\/g, '/')}` 
+            ? `${window.getImageUrl(passenger.userPhoto)}` 
             : 'https://cdn-icons-png.flaticon.com/512/149/149071.png';
 
           resArea.innerHTML = `

@@ -1,4 +1,3 @@
-
 const multer =
   require("multer");
 
@@ -9,55 +8,7 @@ const path =
 
 // ================= STORAGE =================
 
-const storage =
-  multer.diskStorage({
-
-    destination:
-      function(req, file, cb){
-
-        // PROFILE PHOTO
-        if(
-          file.fieldname ===
-          "userPhoto"
-        ){
-          cb(
-            null,
-            "uploads/profiles"
-          );
-        }
-
-        // ID CARD PHOTO
-        else {
-          cb(
-            null,
-            "uploads/idcards"
-          );
-        }
-
-      },
-
-
-
-    filename:
-      function(req, file, cb){
-
-        cb(
-
-          null,
-
-          Date.now() +
-
-          path.extname(
-            file.originalname
-          )
-
-        );
-
-      }
-
-});
-
-
+const storage = multer.memoryStorage();
 
 // ================= FILE FILTER =================
 

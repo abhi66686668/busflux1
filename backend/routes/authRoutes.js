@@ -358,29 +358,17 @@ router.post(
 
 
       // PROFILE PHOTO
-      if(
-        req.files &&
-        req.files.userPhoto
-      ){
-
-        user.userPhoto =
-
-          req.files.userPhoto[0].path;
-
+      if(req.files && req.files.userPhoto){
+        const f = req.files.userPhoto[0];
+        user.userPhoto = `data:${f.mimetype};base64,${f.buffer.toString('base64')}`;
       }
 
 
 
       // ID CARD PHOTO
-      if(
-        req.files &&
-        req.files.idCardPhoto
-      ){
-
-        user.idCardPhoto =
-
-          req.files.idCardPhoto[0].path;
-
+      if(req.files && req.files.idCardPhoto){
+        const f = req.files.idCardPhoto[0];
+        user.idCardPhoto = `data:${f.mimetype};base64,${f.buffer.toString('base64')}`;
       }
 
 
@@ -813,7 +801,8 @@ router.put("/me", auth, upload.fields([{ name: "userPhoto", maxCount: 1 }]), asy
     }
 
     if (req.files && req.files.userPhoto) {
-      user.userPhoto = req.files.userPhoto[0].path.replace(/\\/g, "/");
+      const f = req.files.userPhoto[0];
+      user.userPhoto = `data:${f.mimetype};base64,${f.buffer.toString('base64')}`;
     }
 
     await user.save();

@@ -29,9 +29,10 @@ const busUpload = upload.fields([
 router.post("/add", adminAuth, busUpload, async (req, res) => {
   try {
     const data = { ...req.body };
-    if (req.files?.busPhoto)       data.busPhoto       = req.files.busPhoto[0].path;
-    if (req.files?.driverPhoto)    data.driverPhoto    = req.files.driverPhoto[0].path;
-    if (req.files?.conductorPhoto) data.conductorPhoto = req.files.conductorPhoto[0].path;
+    const getBase64 = f => `data:${f.mimetype};base64,${f.buffer.toString('base64')}`;
+    if (req.files?.busPhoto)       data.busPhoto       = getBase64(req.files.busPhoto[0]);
+    if (req.files?.driverPhoto)    data.driverPhoto    = getBase64(req.files.driverPhoto[0]);
+    if (req.files?.conductorPhoto) data.conductorPhoto = getBase64(req.files.conductorPhoto[0]);
 
     // Parse stops array
     if (data.stops && typeof data.stops === "string") {
@@ -80,9 +81,10 @@ router.get("/:id", async (req, res) => {
 router.put("/:id", adminAuth, busUpload, async (req, res) => {
   try {
     const data = { ...req.body };
-    if (req.files?.busPhoto)       data.busPhoto       = req.files.busPhoto[0].path;
-    if (req.files?.driverPhoto)    data.driverPhoto    = req.files.driverPhoto[0].path;
-    if (req.files?.conductorPhoto) data.conductorPhoto = req.files.conductorPhoto[0].path;
+    const getBase64 = f => `data:${f.mimetype};base64,${f.buffer.toString('base64')}`;
+    if (req.files?.busPhoto)       data.busPhoto       = getBase64(req.files.busPhoto[0]);
+    if (req.files?.driverPhoto)    data.driverPhoto    = getBase64(req.files.driverPhoto[0]);
+    if (req.files?.conductorPhoto) data.conductorPhoto = getBase64(req.files.conductorPhoto[0]);
 
     if (data.stops && typeof data.stops === "string") {
       data.stops = data.stops.split(",").map(s => s.trim()).filter(Boolean);

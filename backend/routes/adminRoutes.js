@@ -177,7 +177,7 @@ router.post("/conductors/add", adminAuth, upload.single("userPhoto"), async (req
       isVerified: true
     };
     if (req.file) {
-      data.userPhoto = req.file.path;
+      data.userPhoto = `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`;
     }
 
     const conductor = await User.create(data);
@@ -220,7 +220,7 @@ router.put("/conductors/:id", adminAuth, upload.single("userPhoto"), async (req,
     }
 
     if (req.file) {
-      conductor.userPhoto = req.file.path;
+      conductor.userPhoto = `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`;
     }
 
     await conductor.save();

@@ -534,7 +534,7 @@ if (busList) {
       let cardsHtml = "";
       buses.forEach((bus, index) => {
         const photoHtml = bus.busPhoto
-          ? `<div class="bus-card-img-wrap"><img class="bus-card-img" src="/${bus.busPhoto.replace(/\\/g,'/')}" onerror="this.parentElement.classList.add('no-img'); this.style.display='none'; this.parentElement.innerHTML='<i class=\\'fas fa-bus\\'></i>';" alt="${bus.busName}"><div class="bus-img-overlay"></div></div>`
+          ? `<div class="bus-card-img-wrap"><img class="bus-card-img" src="${window.getImageUrl(bus.busPhoto)}" onerror="this.parentElement.classList.add('no-img'); this.style.display='none'; this.parentElement.innerHTML='<i class=\\'fas fa-bus\\'></i>';" alt="${bus.busName}"><div class="bus-img-overlay"></div></div>`
           : `<div class="bus-card-img-wrap no-img"><i class="fas fa-bus"></i></div>`;
 
         const stopsPreview = bus.stops && bus.stops.length
@@ -671,6 +671,18 @@ document.addEventListener("DOMContentLoaded", () => {
   const ticketOverlay = document.getElementById("ticketSuccessModal");
   if (ticketOverlay) ticketOverlay.addEventListener("click", e => { if (e.target === ticketOverlay) closeTicketModal(); });
 });
+
+const API = "http://localhost:5000/api";
+let currentUserId = localStorage.getItem("currentUserId") || "";
+
+window.getImageUrl = function(path) {
+  if (!path) return '';
+  if (path.startsWith('data:')) return path;
+  if (path.startsWith('http')) return path;
+  let clean = path.replace(/\\/g, '/').trim();
+  if (!clean.startsWith('/')) clean = '/' + clean;
+  return clean;
+};
 
 async function updatePrice() {
   clearTimeout(_priceDebounce);

@@ -697,9 +697,10 @@ let allBusesData = [];
 
 function getImageUrl(path) {
   if (!path) return '';
+  if (path.startsWith('data:')) return path;
+  if (path.startsWith('http')) return path;
   let clean = path.replace(/\\/g, '/').trim();
   if (!clean.startsWith('/')) clean = '/' + clean;
-  // If it already has /api/ or something, don't break it
   return clean;
 }
 
@@ -814,7 +815,7 @@ async function loadBuses() {
     grid.innerHTML = buses.map(b => `
       <div class="bus-card-admin">
         ${b.busPhoto
-          ? `<img class="bca-img" src="/${b.busPhoto.replace(/\\/g,'/')}" onerror="this.style.display='none'" alt="Bus">`
+          ? `<img class="bca-img" src="${getImageUrl(b.busPhoto)}" onerror="this.style.display='none'" alt="Bus">`
           : `<div class="bca-img-placeholder"><i class="fas fa-bus fa-3x"></i></div>`}
         <div class="bca-body">
           <div class="bca-top">
@@ -836,11 +837,11 @@ async function loadBuses() {
           ${b.stops?.length ? `<div style="font-size:.75rem;color:var(--muted)"><i class="fas fa-map-pin" style="margin-right:4px"></i>${b.stops.join(' → ')}</div>` : ''}
           <div class="bca-staff">
             <div class="staff-mini">
-              ${b.driverPhoto ? `<img src="/${b.driverPhoto.replace(/\\/g,'/')}" onerror="this.outerHTML='<div style=width:32px;height:32px;border-radius:50%;background:rgba(99,102,241,.15);display:flex;align-items:center;justify-content:center><i class=fas fa-user style=color:var(--primary);font-size:.8rem></i></div>'" alt="">` : `<div style="width:32px;height:32px;border-radius:50%;background:rgba(99,102,241,.15);display:flex;align-items:center;justify-content:center"><i class="fas fa-user" style="color:var(--primary);font-size:.8rem"></i></div>`}
+              ${b.driverPhoto ? `<img src="${getImageUrl(b.driverPhoto)}" onerror="this.outerHTML='<div style=width:32px;height:32px;border-radius:50%;background:rgba(99,102,241,.15);display:flex;align-items:center;justify-content:center><i class=fas fa-user style=color:var(--primary);font-size:.8rem></i></div>'" alt="">` : `<div style="width:32px;height:32px;border-radius:50%;background:rgba(99,102,241,.15);display:flex;align-items:center;justify-content:center"><i class="fas fa-user" style="color:var(--primary);font-size:.8rem"></i></div>`}
               <div class="si-info"><div class="si-role">Driver</div><div class="si-name">${b.driverName||'—'}</div>${b.driverPhone?`<div style="font-size:.68rem;color:var(--muted)">${b.driverPhone}</div>`:''}</div>
             </div>
             <div class="staff-mini">
-              ${b.conductorPhoto ? `<img src="/${b.conductorPhoto.replace(/\\/g,'/')}" onerror="this.outerHTML='<div style=width:32px;height:32px;border-radius:50%;background:rgba(168,85,247,.15);display:flex;align-items:center;justify-content:center><i class=fas fa-user style=color:var(--primary2);font-size:.8rem></i></div>'" alt="">` : `<div style="width:32px;height:32px;border-radius:50%;background:rgba(168,85,247,.15);display:flex;align-items:center;justify-content:center"><i class="fas fa-user" style="color:var(--primary2);font-size:.8rem"></i></div>`}
+              ${b.conductorPhoto ? `<img src="${getImageUrl(b.conductorPhoto)}" onerror="this.outerHTML='<div style=width:32px;height:32px;border-radius:50%;background:rgba(168,85,247,.15);display:flex;align-items:center;justify-content:center><i class=fas fa-user style=color:var(--primary2);font-size:.8rem></i></div>'" alt="">` : `<div style="width:32px;height:32px;border-radius:50%;background:rgba(168,85,247,.15);display:flex;align-items:center;justify-content:center"><i class="fas fa-user" style="color:var(--primary2);font-size:.8rem"></i></div>`}
               <div class="si-info"><div class="si-role">Conductor</div><div class="si-name">${b.conductorName||'—'}</div>${b.conductorPhone?`<div style="font-size:.68rem;color:var(--muted)">${b.conductorPhone}</div>`:''}</div>
             </div>
           </div>
@@ -897,7 +898,7 @@ function renderUsers(users) {
   grid.innerHTML = users.map(u => `
     <div class="user-card">
       ${u.userPhoto
-        ? `<img class="uc-avatar" src="/${u.userPhoto.replace(/\\/g,'/')}" onerror="this.src='https://cdn-icons-png.flaticon.com/512/149/149071.png'" alt="">`
+        ? `<img class="uc-avatar" src="${getImageUrl(u.userPhoto)}" onerror="this.src='https://cdn-icons-png.flaticon.com/512/149/149071.png'" alt="">`
         : `<div class="uc-avatar" style="display:flex;align-items:center;justify-content:center;font-size:1.2rem;font-weight:700;background:rgba(99,102,241,.15);color:var(--primary)">${(u.name||'U')[0].toUpperCase()}</div>`}
       <div class="uc-info">
         <div class="uc-name">${u.name||'—'}</div>
@@ -1111,13 +1112,13 @@ function renderBookingsTable(bookings) {
       const statusBadge = isFailed ? '<span class="badge badge-red">Failed</span>' : '<span class="badge badge-green">Paid</span>';
       
       const userPhotoHtml = b.userId?.userPhoto
-        ? `<img src="/${b.userId.userPhoto.replace(/\\/g,'/')}" class="thumb thumb-circle" style="width:32px;height:32px;flex-shrink:0" onerror="this.src='https://cdn-icons-png.flaticon.com/512/149/149071.png'" alt="">`
+        ? `<img src="${getImageUrl(b.userId.userPhoto)}" class="thumb thumb-circle" style="width:32px;height:32px;flex-shrink:0" onerror="this.src='https://cdn-icons-png.flaticon.com/512/149/149071.png'" alt="">`
         : `<div class="thumb thumb-circle" style="width:32px;height:32px;display:flex;align-items:center;justify-content:center;font-size:0.8rem;font-weight:700;background:rgba(99,102,241,.15);color:var(--primary);flex-shrink:0">${(uname||'U')[0].toUpperCase()}</div>`;
       
       let billedByHtml = "";
       if (b.scannedBy) {
         const condPhotoHtml = b.scannedBy.userPhoto
-          ? `<img src="/${b.scannedBy.userPhoto.replace(/\\/g,'/')}" class="thumb thumb-circle" style="width:28px;height:28px;flex-shrink:0" onerror="this.src='https://cdn-icons-png.flaticon.com/512/149/149071.png'" alt="">`
+          ? `<img src="${getImageUrl(b.scannedBy.userPhoto)}" class="thumb thumb-circle" style="width:28px;height:28px;flex-shrink:0" onerror="this.src='https://cdn-icons-png.flaticon.com/512/149/149071.png'" alt="">`
           : `<div class="thumb thumb-circle" style="width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-size:0.75rem;font-weight:700;background:rgba(168,85,247,.15);color:#a855f7;flex-shrink:0">${(b.scannedBy.name||'C')[0].toUpperCase()}</div>`;
         
         billedByHtml = `
@@ -1484,7 +1485,7 @@ function openConductorModal(conductorData = null) {
     
     if (conductorData.userPhoto) {
       if (rev) {
-        rev.src = "/" + conductorData.userPhoto.replace(/\\/g, '/');
+        rev.src = getImageUrl(conductorData.userPhoto);
         rev.style.display = "block";
       }
       if (name) {
