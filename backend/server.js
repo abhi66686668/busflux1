@@ -8,6 +8,9 @@ const cors =
 const dotenv =
   require("dotenv");
 
+const path =
+  require("path");
+
 
 
 // ================= ENV =================
@@ -85,7 +88,7 @@ app.use(
 
   "/uploads",
 
-  express.static("uploads")
+  express.static(path.join(__dirname, "uploads"))
 
 );
 
@@ -146,7 +149,6 @@ app.use("/api/conductor", require("./routes/conductorRoutes"));
 
 
 // ================= STATIC FRONTEND =================
-const path = require("path");
 app.use(express.static(path.join(__dirname, "../frontend")));
 
 app.use((req, res) => {

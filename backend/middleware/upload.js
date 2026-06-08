@@ -17,33 +17,21 @@ const storage =
 
         // PROFILE PHOTO
         if(
-
           file.fieldname ===
           "userPhoto"
-
         ){
-
           cb(
-
             null,
-
             "uploads/profiles"
-
           );
-
         }
 
         // ID CARD PHOTO
         else {
-
           cb(
-
             null,
-
             "uploads/idcards"
-
           );
-
         }
 
       },
