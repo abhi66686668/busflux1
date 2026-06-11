@@ -13,8 +13,83 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="apple-touch-icon" href="icons/icon-192x192.png">
+  <style>
+    @keyframes driveBus {
+      0% {
+        transform: translateX(-100vw) scale(0.9);
+        opacity: 0;
+      }
+      15% {
+        transform: translateX(0) scale(1);
+        opacity: 1;
+      }
+      /* Idling engine vibration in center */
+      20%, 30%, 40%, 50%, 60%, 70% {
+        transform: translateY(-2px) scale(1);
+      }
+      25%, 35%, 45%, 55%, 65%, 75% {
+        transform: translateY(0) scale(1);
+      }
+      80% {
+        transform: translateX(0) scale(1);
+        opacity: 1;
+      }
+      95% {
+        transform: translateX(100vw) scale(0.9);
+        opacity: 0;
+      }
+      100% {
+        transform: translateX(100vw) scale(0.9);
+        opacity: 0;
+      }
+    }
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes fillProgress {
+      0% { width: 0%; }
+      100% { width: 100%; }
+    }
+  </style>
 </head>
 <body class="fade-in">
+
+  <!-- SPLASH SCREEN OVERLAY -->
+  <div id="splashScreen" style="position: fixed; inset: 0; background: linear-gradient(135deg, #0a0f1d, #070a14); z-index: 10000; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: opacity 0.5s ease, visibility 0.5s; overflow: hidden;">
+    <div style="text-align: center; display: flex; flex-direction: column; align-items: center; gap: 24px; width: 100%;">
+      <!-- Glowing Animated Icon -->
+      <div style="position: relative; animation: driveBus 4.5s cubic-bezier(0.25, 1, 0.5, 1) forwards;">
+        <i class="fas fa-bus-alt" style="font-size: 5.5rem; background: linear-gradient(135deg, #818cf8, #c084fc); -webkit-background-clip: text; -webkit-text-fill-color: transparent; filter: drop-shadow(0 0 20px rgba(129, 140, 248, 0.6));"></i>
+      </div>
+      <!-- Brand Name -->
+      <h1 style="font-size: 2.8rem; font-weight: 800; color: #ffffff; margin: 0; font-family: 'Outfit', sans-serif; letter-spacing: 1.5px; animation: fadeInUp 1.2s ease-out;">
+        Bus<span style="background: linear-gradient(135deg, #6366f1, #a855f7); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Flux</span>
+      </h1>
+      <!-- Subtitle -->
+      <p style="font-size: 1rem; color: #94a3b8; font-weight: 500; margin: 0; letter-spacing: 1.2px; animation: fadeInUp 1.6s ease-out;">
+        Next-Gen Transit System
+      </p>
+      
+      <!-- Progress Bar -->
+      <div style="width: 220px; height: 5px; background: rgba(255, 255, 255, 0.08); border-radius: 3px; overflow: hidden; margin-top: 20px;">
+        <div style="width: 0%; height: 100%; background: linear-gradient(90deg, #6366f1, #a855f7); border-radius: 3px; animation: fillProgress 4.5s linear forwards;"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    setTimeout(() => {
+      const splash = document.getElementById("splashScreen");
+      if (splash) {
+        splash.style.opacity = "0";
+        splash.style.visibility = "hidden";
+        setTimeout(() => {
+          window.location.href = "login.html";
+        }, 500);
+      }
+    }, 4500); // 4.5 seconds of active splash + 0.5s fade-out = 5s total
+  </script>
 
   <header class="main-header">
     <div class="nav-container">
