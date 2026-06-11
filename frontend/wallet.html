@@ -323,6 +323,32 @@
       </div>
     </div>
 
+    <!-- ══════════ BUS PASSES & SUBSCRIPTIONS ══════════ -->
+    <div class="recharge-section" style="margin-bottom: 28px;">
+      <div class="recharge-title"><i class="fas fa-id-card-clip" style="margin-right:6px"></i>Bus Passes & Subscriptions</div>
+      <div class="recharge-subtitle">Buy a monthly pass for unlimited travel or get age-based discounts</div>
+
+      <div style="display: flex; gap: 15px; flex-wrap: wrap; margin-bottom: 20px;">
+        <!-- Monthly Pass Option -->
+        <div style="flex: 1; min-width: 250px; background: rgba(99,102,241,.06); border: 2px solid rgba(99,102,241,.15); border-radius: 16px; padding: 20px; transition: all 0.2s; position: relative;">
+          <div style="position: absolute; top: 10px; right: 10px; background: rgba(16, 185, 129, 0.2); color: #10b981; font-size: 0.7rem; font-weight: 800; padding: 4px 8px; border-radius: 6px;">RECOMMENDED</div>
+          <h3 style="font-size: 1.1rem; color: var(--text-main); margin-bottom: 5px;">1-Month Commuter Pass</h3>
+          <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 15px;">Valid for 30 days. Gives you maximum convenience.</p>
+          <div style="font-size: 1.8rem; font-weight: 800; color: #6366f1; margin-bottom: 15px;">₹1,500</div>
+          <button style="width: 100%; background: linear-gradient(135deg, #6366f1, #a855f7); color: white; border: none; padding: 12px; border-radius: 10px; font-weight: bold; cursor: pointer;" onclick="document.getElementById('customAmount').value='1500'; handleCustomInput(); document.getElementById('customAmount').scrollIntoView({behavior: 'smooth'});">Select Pass</button>
+        </div>
+        
+        <!-- Premium Pass Option -->
+        <div style="flex: 1; min-width: 250px; background: rgba(255,255,255,.03); border: 2px solid rgba(255,255,255,.08); border-radius: 16px; padding: 20px; transition: all 0.2s;">
+          <h3 style="font-size: 1.1rem; color: var(--text-main); margin-bottom: 5px;">3-Month Saver Pass</h3>
+          <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 15px;">Valid for 90 days. Best value for regular travelers.</p>
+          <div style="font-size: 1.8rem; font-weight: 800; color: #e0e7ff; margin-bottom: 15px;">₹4,000</div>
+          <button style="width: 100%; background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2); padding: 12px; border-radius: 10px; font-weight: bold; cursor: pointer;" onclick="document.getElementById('customAmount').value='4000'; handleCustomInput(); document.getElementById('customAmount').scrollIntoView({behavior: 'smooth'});">Select Pass</button>
+        </div>
+      </div>
+      <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0;"><i class="fas fa-info-circle"></i> Note: Online payment will add this as a Pass Subscription to your Wallet. Age-based discounts (Youth, Golden Pass) apply automatically.</p>
+    </div>
+
     <!-- ══════════ RECHARGE SECTION ══════════ -->
     <div class="recharge-section">
       <div class="recharge-title"><i class="fas fa-bolt" style="margin-right:6px"></i>Quick Recharge</div>
@@ -417,7 +443,7 @@
   <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
   <script src="script.js?v=3"></script>
   <script>
-    const WALLET_API = "/api";
+    const WALLET_API = window.API_BASE_URL || "http://localhost:5000/api";
     let selectedAmount = 500;
     let selectedPaymentMethod = "upi";
     let allTransactions = [];

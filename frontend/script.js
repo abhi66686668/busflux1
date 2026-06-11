@@ -10,7 +10,7 @@ if ('serviceWorker' in navigator) {
 // ================= UTILITIES & GLOBAL SETTINGS =================
 
 // Base URL for backend API
-const API_BASE_URL = "/api";
+const API_BASE_URL = window.location.protocol === 'file:' ? 'http://localhost:5000/api' : '/api';
 
 // Custom Toast Notification System
 function showToast(message, type = 'info') {
@@ -77,12 +77,14 @@ async function updateNavbar() {
           // If conductor, ONLY show Conductor Dashboard and Logout
           navLinks.innerHTML = `
             <li><a href="conductor.html" style="color: #10b981;"><i class="fas fa-qrcode"></i> Conductor Dashboard</a></li>
+            <li><button onclick="toggleTheme()" title="Toggle Dark/Light Mode" style="background:transparent;border:none;color:var(--text-main);font-size:1.2rem;cursor:pointer;padding: 5px;"><i class="fas fa-moon theme-icon"></i></button></li>
             <li><button class="logout-btn-nav" onclick="logout()"><i class="fas fa-right-from-bracket"></i> Logout</button></li>
           `;
         } else if (user.role === 'admin') {
           // If admin, ONLY show Admin Dashboard and Logout
           navLinks.innerHTML = `
             <li><a href="admin.html" style="color: #6366f1;"><i class="fas fa-shield-halved"></i> Admin Dashboard</a></li>
+            <li><button onclick="toggleTheme()" title="Toggle Dark/Light Mode" style="background:transparent;border:none;color:var(--text-main);font-size:1.2rem;cursor:pointer;padding: 5px;"><i class="fas fa-moon theme-icon"></i></button></li>
             <li><button class="logout-btn-nav" onclick="logout()"><i class="fas fa-right-from-bracket"></i> Logout</button></li>
           `;
         } else {
@@ -109,12 +111,18 @@ async function updateNavbar() {
                 </div>
               </div>
             </li>
+            <li><button onclick="toggleTheme()" title="Toggle Dark/Light Mode" style="background:transparent;border:none;color:var(--text-main);font-size:1.2rem;cursor:pointer;padding: 5px;"><i class="fas fa-moon theme-icon"></i></button></li>
             <li><button class="logout-btn-nav" onclick="logout()"><i class="fas fa-right-from-bracket"></i> Logout</button></li>
           `;
           navLinks.innerHTML = html;
           
           // Fetch notifications after rendering nav
           fetchUserNotifications();
+          
+          // Initialize WebSocket connection
+          if (user && user._id) {
+            initUserWebSocket(user._id);
+          }
         }
       } else {
         // If fetch fails but token exists, clear token and fallback to login
@@ -127,6 +135,7 @@ async function updateNavbar() {
     }
   } else {
     html += `
+      <li><button onclick="toggleTheme()" title="Toggle Dark/Light Mode" style="background:transparent;border:none;color:var(--text-main);font-size:1.2rem;cursor:pointer;padding: 5px;"><i class="fas fa-moon theme-icon"></i></button></li>
       <li><a href="register.html" class="${page === 'register.html' ? 'active' : ''}">Register</a></li>
       <li><a href="login.html" class="nav-btn ${page === 'login.html' ? 'active' : ''}">Login</a></li>
     `;
@@ -327,6 +336,7 @@ if(registerForm){
           formData.append("institutionName", document.getElementById("institutionName").value);
           formData.append("course", document.getElementById("course").value);
           formData.append("studentIdNumber", document.getElementById("studentIdNumber").value);
+          formData.append("passingYear", document.getElementById("passingYear").value);
           const studentIdFile = document.getElementById("studentIdPhoto").files[0];
           if (studentIdFile) {
             formData.append("studentIdPhoto", studentIdFile);
@@ -797,7 +807,10 @@ window.getImageUrl = function(path) {
   if (path.startsWith('http')) return path;
   let clean = path.replace(/\\/g, '/').trim();
   if (!clean.startsWith('/')) clean = '/' + clean;
-  return clean;
+  
+  // Use API_BASE_URL but remove '/api' to get the server root for static files
+  const baseUrl = API_BASE_URL.replace('/api', '');
+  return baseUrl + clean;
 };
 
 async function updatePrice() {
@@ -1626,4 +1639,101 @@ async function rechargeWallet(e) {
   }
 }
 
+// ================= THEME TOGGLE =================
+window.initTheme = function() {
+  const savedTheme = localStorage.getItem('theme') || 'dark';
+  document.documentElement.setAttribute('data-theme', savedTheme);
+  updateThemeIcon(savedTheme);
+};
 
+window.toggleTheme = function() {
+  const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
+  const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', newTheme);
+  localStorage.setItem('theme', newTheme);
+  updateThemeIcon(newTheme);
+};
+
+window.updateThemeIcon = function(theme) {
+  const icons = document.querySelectorAll('.theme-icon');
+  icons.forEach(icon => {
+    if (theme === 'light') {
+      icon.className = 'fas fa-sun theme-icon';
+      icon.style.color = '#f59e0b';
+    } else {
+      icon.className = 'fas fa-moon theme-icon';
+      icon.style.color = '#6366f1';
+    }
+  });
+};
+
+document.addEventListener("DOMContentLoaded", window.initTheme);
+
+// ================= WEBSOCKET REAL-TIME SUPPORT =================
+let userSocket = null;
+
+window.initUserWebSocket = function(userId) {
+  if (!userId) return;
+  if (userSocket) return; // Prevent multiple connections
+  
+  if (typeof io === 'undefined') {
+    const script = document.createElement('script');
+    script.src = "https://cdn.socket.io/4.7.4/socket.io.min.js";
+    script.onload = () => setupUserSocket(userId);
+    document.head.appendChild(script);
+  } else {
+    setupUserSocket(userId);
+  }
+};
+
+function setupUserSocket(userId) {
+  try {
+    const serverUrl = API_BASE_URL.replace('/api', '');
+    userSocket = io(serverUrl);
+    
+    userSocket.on('connect', () => {
+      userSocket.emit('join_room', userId);
+      console.log("Passenger WebSocket connected and joined room:", userId);
+    });
+    
+    userSocket.on('new_notification', (notif) => {
+      showToast(notif.message, notif.type || "info");
+      if (typeof fetchUserNotifications === 'function') {
+        fetchUserNotifications();
+      }
+    });
+
+    userSocket.on('user_data_updated', () => {
+      // Reload wallet balance in navbar
+      const token = localStorage.getItem("token");
+      if (token) {
+        fetch(`${API_BASE_URL}/auth/me`, {
+          headers: { "Authorization": `Bearer ${token}` }
+        })
+        .then(res => {
+          if (res.ok) return res.json();
+        })
+        .then(user => {
+          if (user) {
+            const balSpan = document.getElementById("navWalletBalance");
+            if (balSpan) {
+              balSpan.textContent = `₹${user.balance || 0}`;
+            }
+          }
+        }).catch(err => console.error("Error updating WebSocket balance:", err));
+      }
+      
+      // Reload wallet.html balance display if loadWalletBalance function exists
+      if (typeof loadWalletBalance === 'function') {
+        loadWalletBalance();
+      }
+      
+      // Reload user bookings table if loadBookings exists
+      if (typeof loadBookings === 'function') {
+        loadBookings();
+      }
+    });
+  } catch(e) {
+    console.error("Socket setup failed:", e);
+  }
+}

@@ -693,10 +693,7 @@
         <button class="sidebar-toggle" onclick="toggleSidebar()">
           <i class="fas fa-bars"></i>
         </button>
-        <div class="search-mock">
-          <i class="fas fa-search"></i>
-          <span>Search or type command...</span>
-        </div>
+
       </div>
       
       <div class="header-right">
@@ -1089,7 +1086,7 @@
               <span style="color: var(--text-muted);">Email:</span>
               <span id="modalPassengerEmail" style="font-weight: 600; word-break: break-all;">john@example.com</span>
             </div>
-            <div style="display: flex; justify-content: space-between;">
+            <div style="display: none; justify-content: space-between;">
               <span style="color: var(--text-muted);">Phone Number:</span>
               <span id="modalPassengerPhone" style="font-weight: 600;">+91 9988776655</span>
             </div>
@@ -1097,7 +1094,7 @@
               <span style="color: var(--text-muted);">Age:</span>
               <span id="modalPassengerAge" style="font-weight: 600;">22 years</span>
             </div>
-            <div style="display: flex; justify-content: space-between;">
+            <div style="display: none; justify-content: space-between;">
               <span style="color: var(--text-muted);">Wallet Balance:</span>
               <span id="modalPassengerBalance" style="font-weight: 700; color: var(--success);">₹250</span>
             </div>
@@ -1170,12 +1167,13 @@
     </div>
   </div>
 
+  <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
   <script>
-    const API = "/api";
+    const API = window.location.protocol === 'file:' ? 'http://localhost:5000/api' : '/api';
     window.getImageUrl = function(path) {
       if (!path) return '';
       if (path.startsWith('http') || path.startsWith('data:')) return path;
-      return `/${path.replace(/^\/+/, '')}`;
+      return `http://localhost:5000/${path.replace(/^\/+/, '')}`;
     };
     const token = localStorage.getItem("token");
     let buses = [];
@@ -1227,6 +1225,28 @@
             loadBusesList();
             refreshDashboardData();
             addNotification("Conductor Connected", `Successfully authenticated as Conductor ${user.name || 'Staff'}.`, "success");
+
+            // Initialize WebSockets
+            try {
+              const SOCKET_URL = API.replace('/api', '');
+              const socket = io(SOCKET_URL);
+              
+              socket.on('connect', () => {
+                socket.emit('join_room', user._id);
+                console.log("WebSocket connected and joined room:", user._id);
+              });
+              
+              socket.on('new_notification', (notif) => {
+                addNotification(notif.title || "Alert", notif.message, notif.type || "info");
+              });
+              
+              socket.on('admin_data_updated', () => {
+                refreshDashboardData();
+                loadHistoryTable();
+              });
+            } catch(e) {
+              console.error("Failed to initialize WebSocket for Conductor:", e);
+            }
           }
         })
         .catch(err => {
@@ -1526,7 +1546,7 @@
               <span style="color: var(--text-muted); font-size: 0.9rem;">Calculated Fare:</span>
               <span style="font-size: 1.1rem; font-weight: 800; color: var(--primary);">₹${totalPrice}</span>
             </div>
-            <div style="display: flex; justify-content: space-between;">
+            <div style="display: none; justify-content: space-between;">
               <span style="color: var(--text-muted); font-size: 0.9rem;">Wallet Balance:</span>
               <span style="font-size: 1.1rem; font-weight: 700; color: ${passenger.balance >= totalPrice ? 'var(--success)' : 'var(--danger)'};">₹${passenger.balance}</span>
             </div>

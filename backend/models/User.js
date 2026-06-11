@@ -108,6 +108,12 @@ const userSchema =
         default: ""
       },
       
+      // PASSING YEAR
+      passingYear: {
+        type: Number,
+        default: null
+      },
+
       // INSTITUTION TYPE
       institutionType: {
         type: String,

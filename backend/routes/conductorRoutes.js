@@ -316,7 +316,7 @@ router.post("/deduct-pass", auth, async (req, res) => {
         targetRole: "admin"
       });
       
-      await Notification.create({
+      const userNotif = await Notification.create({
         title: "Pass Deducted",
         message: `A conductor deducted ₹${totalPrice} from your wallet for a spot booking.`,
         type: "info",
@@ -328,6 +328,8 @@ router.post("/deduct-pass", auth, async (req, res) => {
       if (io) {
         io.emit('new_admin_notification', notif);
         io.emit('admin_data_updated');
+        io.to(passenger._id.toString()).emit('new_notification', userNotif);
+        io.to(passenger._id.toString()).emit('user_data_updated');
       }
     } catch(err) { console.error(err); }
 
@@ -412,7 +414,7 @@ router.post("/refund-booking", auth, async (req, res) => {
         targetRole: "admin"
       });
       
-      await Notification.create({
+      const userNotif = await Notification.create({
         title: "Ticket Refunded",
         message: `A conductor refunded ₹${booking.totalPrice} to your wallet.`,
         type: "success",
@@ -424,6 +426,8 @@ router.post("/refund-booking", auth, async (req, res) => {
       if (io) {
         io.emit('new_admin_notification', notif);
         io.emit('admin_data_updated');
+        io.to(passenger._id.toString()).emit('new_notification', userNotif);
+        io.to(passenger._id.toString()).emit('user_data_updated');
       }
     } catch(err) { console.error(err); }
 

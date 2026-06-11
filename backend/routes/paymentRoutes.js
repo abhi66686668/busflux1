@@ -153,13 +153,18 @@ router.post("/verify", auth, async (req, res) => {
         io.emit('admin_data_updated');
       }
 
-      await Notification.create({
-        title: "Wallet Recharged",
-        message: `Successfully added ₹${transaction.amount} to your wallet.`,
+      const userNotif = await Notification.create({
+        title: "Ticket Confirmed",
+        message: `Your ticket for ${bus.busName} from ${booking.boardingPoint} to ${booking.droppingPoint} is confirmed.`,
         type: "success",
         targetRole: "user",
         targetUser: user._id
       });
+
+      if (io) {
+        io.to(user._id.toString()).emit('new_notification', userNotif);
+        io.to(user._id.toString()).emit('user_data_updated');
+      }
     } catch(err) { console.error(err); }
 
     // Reduce seats
@@ -299,13 +304,18 @@ router.post("/wallet-verify", auth, async (req, res) => {
         io.emit('admin_data_updated');
       }
       
-      await Notification.create({
-        title: "Ticket Confirmed",
-        message: `Your ticket for ${bus.busName} is confirmed.`,
+      const userNotif = await Notification.create({
+        title: "Wallet Recharged",
+        message: `Successfully added ₹${rechargeAmount} to your wallet (+₹${bonus} bonus).`,
         type: "success",
         targetRole: "user",
         targetUser: user._id
       });
+
+      if (io) {
+        io.to(user._id.toString()).emit('new_notification', userNotif);
+        io.to(user._id.toString()).emit('user_data_updated');
+      }
     } catch(err) { console.error(err); }
 
     res.status(200).json({

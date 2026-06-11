@@ -94,13 +94,18 @@ router.post("/book/:busId", auth, async (req, res) => {
         io.emit('admin_data_updated');
       }
       
-      await Notification.create({
+      const userNotif = await Notification.create({
         title: "Ticket Confirmed",
         message: `Your ticket for ${bus.busName} from ${booking.boardingPoint} to ${booking.droppingPoint} is confirmed.`,
         type: "success",
         targetRole: "user",
         targetUser: req.user.id
       });
+      
+      if (io) {
+        io.to(req.user.id.toString()).emit('new_notification', userNotif);
+        io.to(req.user.id.toString()).emit('user_data_updated');
+      }
     } catch(err) { console.error(err); }
 
     // Deduct from wallet

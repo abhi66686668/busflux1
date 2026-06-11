@@ -54,6 +54,39 @@ const transporter =
 
 
 
+// ================= CHECK USER =================
+router.post("/check-user", async (req, res) => {
+  try {
+    const { email, phone, aadhaarNumber } = req.body;
+    
+    if (email) {
+      const existingEmail = await User.findOne({ email });
+      if (existingEmail) {
+        return res.status(400).json({ error: "Email is already registered" });
+      }
+    }
+    
+    if (phone) {
+      const existingPhone = await User.findOne({ phone });
+      if (existingPhone) {
+        return res.status(400).json({ error: "Phone number is already in use" });
+      }
+    }
+    
+    if (aadhaarNumber) {
+      const existingAadhaar = await User.findOne({ aadhaarNumber });
+      if (existingAadhaar) {
+        return res.status(400).json({ error: "Aadhaar Card is already registered" });
+      }
+    }
+    
+    res.json({ message: "User available" });
+  } catch (error) {
+    console.error("Check user error:", error);
+    res.status(500).json({ error: "Server error checking user" });
+  }
+});
+
 // ================= SEND OTP =================
 
 router.post(
@@ -269,7 +302,8 @@ router.post(
       institutionName,
       course,
       studentIdNumber,
-      dob
+      dob,
+      passingYear
     } = req.body;
 
 
@@ -279,6 +313,24 @@ router.post(
         return res.status(400).json({
           message: "Email already registered"
         });
+      }
+
+      if (aadhaarNumber) {
+        const existingAadhaar = await User.findOne({ aadhaarNumber });
+        if (existingAadhaar && (!user || existingAadhaar._id.toString() !== user._id.toString())) {
+          return res.status(400).json({
+            message: "Aadhaar card already registered"
+          });
+        }
+      }
+
+      if (studentIdNumber) {
+        const existingStudentId = await User.findOne({ studentIdNumber });
+        if (existingStudentId && (!user || existingStudentId._id.toString() !== user._id.toString())) {
+          return res.status(400).json({
+            message: "Student ID card already registered"
+          });
+        }
       }
 
       if (!user) {
@@ -354,17 +406,37 @@ router.post(
 
       user.aadhaarNumber =
         aadhaarNumber;
-
-      user.collegeId =
-        collegeId;
         
       user.gender = gender;
-      
-      if (institutionType) user.institutionType = institutionType;
-      if (institutionName) user.institutionName = institutionName;
-      if (course) user.course = course;
-      if (studentIdNumber) user.studentIdNumber = studentIdNumber;
       if (dob) user.dob = dob;
+
+      let isStudentExpired = false;
+      if (passingYear) {
+        user.passingYear = Number(passingYear);
+        if (new Date().getFullYear() > user.passingYear) {
+          isStudentExpired = true;
+        }
+      }
+
+      if (isStudentExpired && passingYear) {
+        return res.status(400).json({
+          message: "Your passing year has expired. You cannot register as a student."
+        });
+      }
+
+      if (!isStudentExpired) {
+        user.collegeId = collegeId;
+        if (institutionType) user.institutionType = institutionType;
+        if (institutionName) user.institutionName = institutionName;
+        if (course) user.course = course;
+        if (studentIdNumber) user.studentIdNumber = studentIdNumber;
+      } else {
+        user.collegeId = "";
+        user.institutionType = "";
+        user.institutionName = "";
+        user.course = "";
+        user.studentIdNumber = "";
+      }
 
       user.password =
         hashedPassword;
@@ -386,7 +458,7 @@ router.post(
       }
       
       // STUDENT ID PHOTO
-      if(req.files && req.files.studentIdPhoto){
+      if(!isStudentExpired && req.files && req.files.studentIdPhoto){
         const f = req.files.studentIdPhoto[0];
         user.studentIdPhoto = `data:${f.mimetype};base64,${f.buffer.toString('base64')}`;
       }
@@ -822,6 +894,23 @@ router.get("/me", auth, async (req, res) => {
       if (calculatedAge > 0 && calculatedAge !== user.age) {
           user.age = calculatedAge;
           user.save().catch(e => console.error(e));
+      }
+    }
+
+    // Downgrade student to young adult if passingYear is elapsed
+    if (user.passingYear && new Date().getFullYear() > user.passingYear) {
+      if (user.collegeId || user.institutionType) {
+        user.collegeId = "";
+        user.institutionType = "";
+        user.institutionName = "";
+        user.course = "";
+        user.studentIdNumber = "";
+        userObj.collegeId = "";
+        userObj.institutionType = "";
+        userObj.institutionName = "";
+        userObj.course = "";
+        userObj.studentIdNumber = "";
+        user.save().catch(e => console.error("Downgrade save error:", e));
       }
     }
 

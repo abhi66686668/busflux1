@@ -19,6 +19,58 @@
   --radius-md: 10px;
 }
 
+[data-theme="light"] {
+  --bg-primary: #f4f7f6;
+  --bg-gradient: radial-gradient(circle at top, #ffffff 0%, #f0f4f8 100%);
+  --glass-bg: rgba(255, 255, 255, 0.85);
+  --glass-border: rgba(0, 0, 0, 0.1);
+  --glass-focus-border: rgba(99, 102, 241, 0.6);
+  --text-main: #1e293b;
+  --text-muted: #64748b;
+  --card-bg: #ffffff;
+  --nav-bg: #ffffff;
+}
+
+/* Light mode specific overrides for existing elements that might have hardcoded dark colors */
+[data-theme="light"] body {
+  background: var(--bg-gradient);
+  color: var(--text-main);
+}
+[data-theme="light"] .form-group input, 
+[data-theme="light"] .form-group select, 
+[data-theme="light"] .form-group textarea {
+  background: #ffffff;
+  color: var(--text-main);
+  border: 1px solid #cbd5e1;
+}
+[data-theme="light"] .auth-card,
+[data-theme="light"] .bus-card,
+[data-theme="light"] .booking-card,
+[data-theme="light"] .glass-panel {
+  background: #ffffff;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e2e8f0;
+}
+[data-theme="light"] .nav-container {
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+}
+[data-theme="light"] .nav-links a {
+  color: #475569;
+}
+[data-theme="light"] .nav-links a:hover,
+[data-theme="light"] .nav-links a.active {
+  color: #4f46e5;
+}
+[data-theme="light"] .empty-state {
+  background: #f8fafc;
+  border-color: #e2e8f0;
+}
+[data-theme="light"] .modal-content {
+  background: #ffffff;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.15);
+}
+
 * {
   box-sizing: border-box;
   margin: 0;

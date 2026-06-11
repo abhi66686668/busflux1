@@ -184,7 +184,7 @@
       if (!token) return window.location.href = "login.html";
 
       try {
-        const res = await fetch("/api/auth/me", {
+        const res = await fetch(`${API_BASE_URL}/auth/me`, {
           headers: { "Authorization": `Bearer ${token}` }
         });
         const user = await res.json();
@@ -198,7 +198,8 @@
           document.getElementById('idNumber').value = user.aadhaarNumber || user.collegeId || "Not Provided";
           
           if (user.userPhoto) {
-            document.getElementById('profileImage').src = "/" + user.userPhoto;
+            const baseUrl = API_BASE_URL.replace('/api', '');
+            document.getElementById('profileImage').src = baseUrl + "/" + user.userPhoto;
           }
           
           if (user.profileQr) {
@@ -253,7 +254,7 @@
       }
 
       try {
-        const res = await fetch("/api/auth/me", {
+        const res = await fetch(`${API_BASE_URL}/auth/me`, {
           method: "PUT",
           headers: {
             "Authorization": `Bearer ${token}`

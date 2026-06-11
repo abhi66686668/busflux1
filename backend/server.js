@@ -62,6 +62,14 @@ app.set('io', io); // Make io available in routes via req.app.get('io')
 
 io.on('connection', (socket) => {
   console.log('A client connected:', socket.id);
+  
+  socket.on('join_room', (userId) => {
+    if (userId) {
+      socket.join(userId.toString());
+      console.log(`Socket ${socket.id} joined room: ${userId}`);
+    }
+  });
+
   socket.on('disconnect', () => {
     console.log('Client disconnected:', socket.id);
   });

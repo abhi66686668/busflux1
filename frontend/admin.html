@@ -335,12 +335,17 @@
       <div class="topbar-title" id="topbarTitle">Dashboard</div>
     </div>
     <div class="topbar-right" style="position:relative; display:flex; align-items:center; gap:16px;">
+      <!-- Theme Toggle -->
+      <button onclick="toggleTheme()" title="Toggle Dark/Light Mode" style="background:transparent;border:none;color:var(--text);font-size:1.2rem;cursor:pointer;padding: 5px;">
+        <i class="fas fa-moon theme-icon" id="themeIcon"></i>
+      </button>
+
       <!-- Notification Bell -->
       <div id="adminNotiWrapper" style="position:relative; cursor:pointer;" onclick="toggleAdminNotifications(event)">
         <i class="fas fa-bell" style="font-size:1.2rem; color:var(--text); transition:color 0.2s;" onmouseover="this.style.color='var(--primary)'" onmouseout="this.style.color='var(--text)'"></i>
         <div id="adminNotiDot" style="display:none; position:absolute; top:-2px; right:-2px; width:8px; height:8px; background:var(--danger); border-radius:50%; box-shadow:0 0 5px var(--danger);"></div>
         <!-- Dropdown -->
-        <div id="adminNotiDropdown" style="display:none; position:absolute; top:35px; right:0; width:320px; background:var(--card-bg); border:1px solid var(--card-border); backdrop-filter:blur(12px); border-radius:var(--radius); box-shadow:0 10px 30px rgba(0,0,0,0.5); z-index:100; overflow:hidden;">
+        <div id="adminNotiDropdown" style="display:none; position:absolute; top:35px; right:0; width:320px; background:#151f32; border:1px solid var(--card-border); backdrop-filter:blur(12px); border-radius:var(--radius); box-shadow:0 10px 30px rgba(0,0,0,0.5); z-index:100; overflow:hidden;">
           <div style="padding:12px 16px; border-bottom:1px solid var(--card-border); display:flex; justify-content:space-between; align-items:center; background:rgba(0,0,0,0.2);">
             <h4 style="font-size:0.9rem; font-weight:700; margin:0;">Notifications</h4>
             <button onclick="markAdminNotiRead('all', event)" style="background:none; border:none; color:var(--primary); font-size:0.75rem; font-weight:600; cursor:pointer;">Mark all read</button>
@@ -688,7 +693,7 @@
 
 <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
 <script>
-const API = "/api";
+const API = window.location.protocol === 'file:' ? 'http://localhost:5000/api' : '/api';
 let adminToken = localStorage.getItem("adminToken") || "";
 let allUsersGrouped = {};
 let allBookingsData = [];
@@ -701,7 +706,7 @@ function getImageUrl(path) {
   if (path.startsWith('http')) return path;
   let clean = path.replace(/\\/g, '/').trim();
   if (!clean.startsWith('/')) clean = '/' + clean;
-  return clean;
+  return "http://localhost:5000" + clean;
 }
 
 // ── Toast ──
@@ -724,6 +729,8 @@ function checkAuth() {
     loadConductors();
     loadBookings();
     loadTransactions();
+    const savedPage = sessionStorage.getItem("adminCurrentPage") || "dashboard";
+    showPage(savedPage);
   }
 }
 
@@ -744,6 +751,8 @@ async function adminLogin() {
       document.getElementById("loginScreen").style.display = "none";
       toast("Welcome back, " + (data.name||"Admin"), "success");
       loadDashboard(); loadBuses(); loadUsers(); loadConductors(); loadBookings(); loadTransactions();
+      const savedPage = sessionStorage.getItem("adminCurrentPage") || "dashboard";
+      showPage(savedPage);
     } else {
       toast(data.message || "Login failed", "error");
     }
@@ -770,11 +779,22 @@ function showPage(name, btn) {
 
   document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
   document.querySelectorAll(".sb-item").forEach(b => b.classList.remove("active"));
-  document.getElementById("page-"+name).classList.add("active");
-  if (btn) btn.classList.add("active");
+  
+  const pageElem = document.getElementById("page-"+name);
+  if (pageElem) pageElem.classList.add("active");
+  
+  if (btn) {
+    btn.classList.add("active");
+  } else {
+    const targetBtn = document.querySelector(`.sb-item[onclick="showPage('${name}',this)"]`) || document.querySelector(`.sb-item[onclick="showPage('${name}')"]`);
+    if (targetBtn) targetBtn.classList.add("active");
+  }
+
   document.getElementById("topbarTitle").textContent = {
     dashboard:"Dashboard", buses:"Bus Fleet", users:"Users", conductors:"Conductors", bookings:"Bookings", transactions:"Wallet Transactions"
   }[name] || name;
+  
+  sessionStorage.setItem("adminCurrentPage", name);
 }
 
 // ── Dashboard Stats ──
@@ -1107,7 +1127,9 @@ function renderBookingsTable(bookings) {
       const bname  = b.busId?.busName || "—";
       const bnum   = b.busId?.busNumber || "";
       const route  = b.busId ? `${b.busId.from || ""} → ${b.busId.to || ""}` : "—";
-      const date   = b.createdAt ? new Date(b.createdAt).toLocaleDateString("en-IN") : "—";
+      const dateObj = b.createdAt ? new Date(b.createdAt) : null;
+      const dateStr = dateObj ? dateObj.toLocaleDateString("en-IN") : "—";
+      const timeStr = dateObj ? dateObj.toLocaleTimeString("en-IN", { hour: '2-digit', minute: '2-digit', hour12: true }) : "";
       const isFailed = b.status === "failed";
       const statusBadge = isFailed ? '<span class="badge badge-red">Failed</span>' : '<span class="badge badge-green">Paid</span>';
       
@@ -1154,7 +1176,10 @@ function renderBookingsTable(bookings) {
         <td>${billedByHtml}</td>
         <td style="font-weight:700;color:${isFailed ? 'var(--danger)' : '#a855f7'}">₹${b.totalPrice || 0}</td>
         <td>${statusBadge}</td>
-        <td style="font-size:.8rem;color:var(--muted)">${date}</td>
+        <td>
+          <div>${dateStr}</div>
+          ${timeStr ? `<div style="font-size:.72rem;color:var(--muted);margin-top:2px">${timeStr}</div>` : ''}
+        </td>
       </tr>`;
     }).join("");
   } catch (err) {
@@ -1688,7 +1713,8 @@ async function markAdminNotiRead(id, e) {
 checkAuth();
 
 // WebSocket connection for real-time notifications
-const socket = io();
+const SOCKET_URL = API.replace('/api', '');
+const socket = io(SOCKET_URL);
 
 if (adminToken) {
   fetchAdminNotifications();
@@ -1707,6 +1733,31 @@ if (adminToken) {
     loadBookings();
   });
 }
+
+// ================= THEME TOGGLE =================
+function initTheme() {
+  const savedTheme = localStorage.getItem('theme') || 'dark';
+  document.documentElement.setAttribute('data-theme', savedTheme);
+  const icon = document.getElementById('themeIcon');
+  if (icon) {
+    icon.className = savedTheme === 'light' ? 'fas fa-sun theme-icon' : 'fas fa-moon theme-icon';
+    icon.style.color = savedTheme === 'light' ? '#f59e0b' : '#6366f1';
+  }
+}
+
+function toggleTheme() {
+  const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
+  const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', newTheme);
+  localStorage.setItem('theme', newTheme);
+  const icon = document.getElementById('themeIcon');
+  if (icon) {
+    icon.className = newTheme === 'light' ? 'fas fa-sun theme-icon' : 'fas fa-moon theme-icon';
+    icon.style.color = newTheme === 'light' ? '#f59e0b' : '#6366f1';
+  }
+}
+
+document.addEventListener("DOMContentLoaded", initTheme);
 
 </script>
 </body>
